@@ -50,6 +50,8 @@ Run each file in order, and read the comments inside it as you go.
 | [`step4_agent.py`](step4_agent.py) | **The agent loop.** Claude uses tools until it's done | Yes |
 | [`step5_tool_runner.py`](step5_tool_runner.py) | The shortcut: the SDK runs the loop for you | Yes |
 | [`step6_chat_agent.py`](step6_chat_agent.py) | A chat agent with memory that asks before acting | Yes |
+| [`step7_mcp_server.py`](step7_mcp_server.py) | Your own **MCP server** that packages the notes tools | No (started by 7b) |
+| [`step7_mcp_agent.py`](step7_mcp_agent.py) | An agent that gets its tools **from the MCP server** | Yes |
 
 ```bash
 python step2_chat.py
@@ -57,6 +59,7 @@ python step3_tools.py
 python step4_agent.py
 python step5_tool_runner.py
 python step6_chat_agent.py
+python step7_mcp_agent.py
 ```
 
 ## How the agent loop works (`step4_agent.py`)
@@ -68,6 +71,38 @@ python step6_chat_agent.py
 | 3 | If `stop_reason` is not `"tool_use"`, Claude is done, so stop |
 | 4 | Otherwise **your code** runs each tool Claude asked for |
 | 5 | Send all the results back in **one** message, then go to 1 |
+
+## Step 7: MCP (Model Context Protocol)
+
+In steps 4–6, the tools live **inside** the agent file. MCP moves them into a
+separate program called an **MCP server**, which any AI app can connect to.
+Once you've written an MCP server, your agent, Claude Desktop, Claude Code and
+VS Code can all use the same tools.
+
+```
+step7_mcp_agent.py  (MCP client)             step7_mcp_server.py  (MCP server)
+  1. starts the server               ─────▶   get_current_time
+  2. "which tools do you have?"      ◀─────   save_note, read_notes, clear_notes
+  3. sends the tool list to Claude
+  4. Claude asks for save_note
+  5. "please run save_note"          ─────▶   runs the function
+  6. sends the result back to Claude ◀─────   "Note saved."
+```
+
+What changes compared to step 6:
+
+- **Server:** `@server.tool()` turns a normal function into an MCP tool. The
+  description comes from the docstring and type hints, so you don't write any JSON.
+- **Agent:** `session.list_tools()` asks the server for its tools, and
+  `session.call_tool(name, input)` asks the server to run one. The agent loop
+  itself is unchanged.
+
+Try it with `python step7_mcp_agent.py`, then ask *"Save a note: learn MCP"* and
+*"What are my notes?"*. The 🔧 lines say `[via MCP]`.
+
+**Exercise:** add a new `@server.tool()` function to `step7_mcp_server.py`
+(for example `count_notes`). Restart the agent and it will find the new tool
+automatically, with no changes to `step7_mcp_agent.py`.
 
 ## Common beginner mistakes
 
