@@ -29,6 +29,11 @@ SCOPES = [
 
 
 def main():
+    if not os.path.exists("credentials.json"):
+        raise SystemExit(
+            "❌ credentials.json not found in this folder.\n"
+            "   Create it in Google Cloud first: see 'Step 8' in README.md (8.1 - 8.4)."
+        )
     flow = InstalledAppFlow.from_client_secrets_file(
         "credentials.json", SCOPES, redirect_uri="http://localhost:8080/"
     )
