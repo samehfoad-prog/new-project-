@@ -14,7 +14,7 @@ How it works:
   3. We ask Gmail "what was added since the last historyId?", fetch
      those emails, and hand each one to Claude.
 
-Before running: follow "Step 8" in README.md, fill in the 3 settings
+Before running: follow docs/GMAIL_SETUP.md, fill in the 3 settings
 below, and run step8_gmail_auth.py once.
 
 Run:  python step8_gmail_agent.py      (Ctrl + C to stop)

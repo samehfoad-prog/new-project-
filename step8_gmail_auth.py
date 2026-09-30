@@ -1,7 +1,7 @@
 """
 STEP 8a - Log in to Google once (Gmail + Pub/Sub).
 
-Before running this, follow "Step 8: Gmail + Pub/Sub" in README.md and put
+Before running this, follow docs/GMAIL_SETUP.md and put
 the credentials.json file you downloaded from Google Cloud in this folder.
 
 This script:
@@ -32,7 +32,7 @@ def main():
     if not os.path.exists("credentials.json"):
         raise SystemExit(
             "❌ credentials.json not found in this folder.\n"
-            "   Create it in Google Cloud first: see 'Step 8' in README.md (8.1 - 8.4)."
+            "   Create it in Google Cloud first: see docs/GMAIL_SETUP.md."
         )
     flow = InstalledAppFlow.from_client_secrets_file(
         "credentials.json", SCOPES, redirect_uri="http://localhost:8080/"
