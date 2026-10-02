@@ -1,0 +1,674 @@
+<title>Warm Paths</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: one working column — status strip, tabs, then the active list. Targets → ranked people → message draft. */
+:root {
+  --bg: #f3f6fa; --surface: #ffffff; --sunk: #e9eef5; --ink: #0f2238; --muted: #56677d; --line: #d6dfea;
+  --accent: #0b62c4; --accent-soft: #e3effc; --on-accent: #ffffff; --navy: #06305c;
+  --warm: #b4500d; --warm-soft: #fdf0e4; --good: #1d7a46; --good-soft: #e5f5ec; --cold: #6b7a8f; --cold-soft: #eef1f5;
+  --danger: #b42323;
+  --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0b1622; --surface: #112133; --sunk: #0e1c2b; --ink: #e5edf6; --muted: #93a6bb; --line: #23384f;
+  --accent: #4ea3ff; --accent-soft: #14304d; --on-accent: #06182a; --navy: #a9cdf5;
+  --warm: #f0a062; --warm-soft: #3a2414; --good: #5fcf8f; --good-soft: #12301f; --cold: #9aa9bb; --cold-soft: #1a2a3b;
+  --danger: #ff8a8a; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0b1622; --surface: #112133; --sunk: #0e1c2b; --ink: #e5edf6; --muted: #93a6bb; --line: #23384f;
+  --accent: #4ea3ff; --accent-soft: #14304d; --on-accent: #06182a; --navy: #a9cdf5;
+  --warm: #f0a062; --warm-soft: #3a2414; --good: #5fcf8f; --good-soft: #12301f; --cold: #9aa9bb; --cold-soft: #1a2a3b;
+  --danger: #ff8a8a; color-scheme: dark; }
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.5 var(--body); margin: 0; }
+.wrap { max-width: 980px; margin: 0 auto; padding-inline: 16px; padding-block: 20px 48px; display: grid; gap: 18px; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; color: var(--navy); }
+h1 { font-size: 30px; letter-spacing: -.01em; }
+h2 { font-size: 20px; }
+h3 { font-size: 16px; }
+p { margin: 0; }
+a { color: var(--accent); }
+.muted { color: var(--muted); }
+.small { font-size: 13px; }
+.mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.eyebrow { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+
+header.top { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px; }
+.stats { display: flex; flex-wrap: wrap; gap: 8px; }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; min-width: 104px; }
+.stat b { display: block; font-family: var(--mono); font-size: 18px; color: var(--ink); }
+.stat span { font-size: 12px; color: var(--muted); }
+.stat.alert b { color: var(--warm); }
+
+nav.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); overflow-x: auto; }
+nav.tabs button { background: none; border: 0; border-bottom: 3px solid transparent; padding: 10px 12px; font: 600 14px var(--body); color: var(--muted); cursor: pointer; white-space: nowrap; }
+nav.tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+nav.tabs .count { font-family: var(--mono); font-size: 12px; margin-left: 4px; }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: grid; gap: 12px; min-width: 0; }
+.banner { background: var(--warm-soft); color: var(--ink); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; font-size: 14px; }
+.banner.info { background: var(--accent-soft); }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.spread { justify-content: space-between; }
+.stack { display: grid; gap: 10px; }
+
+button, .btn { font: 600 14px var(--body); border-radius: 8px; padding: 8px 12px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+button.primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+button.ghost { background: transparent; }
+button.danger { color: var(--danger); }
+button:disabled { opacity: .55; cursor: default; }
+button:focus-visible, .btn:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+input[type="text"], input[type="url"], input[type="search"], input[type="date"], select, textarea {
+  font: 14px var(--body); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; width: 100%; min-width: 0; }
+textarea { resize: vertical; line-height: 1.5; }
+label.field { display: grid; gap: 4px; font-size: 13px; font-weight: 600; color: var(--muted); }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+
+.target { display: grid; gap: 12px; }
+.target-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; align-items: start; }
+.people { display: grid; gap: 8px; }
+.person { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: grid; gap: 8px; background: var(--bg); min-width: 0; }
+.person-top { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; }
+.score { font-family: var(--mono); font-size: 13px; width: 44px; text-align: center; border-radius: 6px; padding: 4px 0; font-weight: 500; }
+.score.warm { background: var(--warm-soft); color: var(--warm); }
+.score.good { background: var(--good-soft); color: var(--good); }
+.score.cold { background: var(--cold-soft); color: var(--cold); }
+.who { min-width: 0; }
+.who b { display: block; overflow-wrap: anywhere; }
+.who span { color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-size: 12px; font-weight: 600; border-radius: 999px; padding: 2px 9px; background: var(--sunk); color: var(--muted); border: 1px solid var(--line); }
+.chip.dh { background: var(--warm-soft); color: var(--warm); border-color: transparent; }
+.chip.rec { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.chip.lead { background: var(--good-soft); color: var(--good); border-color: transparent; }
+.status { font-size: 12px; font-weight: 600; border-radius: 999px; padding: 3px 10px; white-space: nowrap; }
+.st-none { background: var(--sunk); color: var(--muted); }
+.st-messaged { background: var(--accent-soft); color: var(--accent); }
+.st-replied, .st-coffee { background: var(--good-soft); color: var(--good); }
+.st-referred { background: var(--good); color: var(--on-accent); }
+.st-notnow { background: var(--cold-soft); color: var(--cold); }
+.due { color: var(--warm); font-weight: 600; }
+.draft { display: grid; gap: 8px; border-top: 1px dashed var(--line); padding-top: 10px; }
+.draft textarea { min-height: 150px; background: var(--surface); }
+details > summary { cursor: pointer; color: var(--muted); font-size: 13px; font-weight: 600; }
+.empty { text-align: left; display: grid; gap: 10px; padding: 8px 4px; }
+ol.steps { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+.list-compact { display: grid; gap: 6px; }
+.contact-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; border-bottom: 1px solid var(--line); padding-block: 8px; min-width: 0; }
+.toggle { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-weight: 600; font-size: 14px; max-width: calc(100% - 32px); }
+.confirm { background: var(--warm-soft); border-radius: 8px; padding: 10px; display: grid; gap: 8px; }
+@media (max-width: 520px) { h1 { font-size: 25px; } .person-top { grid-template-columns: auto 1fr; } .person-top .status { grid-column: 1 / -1; justify-self: start; } }
+@media (prefers-reduced-motion: no-preference) { .person { transition: border-color .15s; } .person:hover { border-color: var(--accent); } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="stack" style="gap:4px">
+      <span class="eyebrow">Referral finder</span>
+      <h1>Warm Paths</h1>
+      <p class="muted small">Who you already know at the companies you're applying to, ranked by how warm the path is.</p>
+    </div>
+    <div class="stats" id="stats"></div>
+  </header>
+  <div id="notice"></div>
+  <nav class="tabs" role="tablist" id="tabs"></nav>
+  <main id="main"></main>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(() => {
+  "use strict";
+  const DAY = 86400000;
+  const STATUS = [
+    ["none", "Not contacted"], ["messaged", "Messaged"], ["replied", "Replied"],
+    ["coffee", "Coffee chat"], ["referred", "Referred"], ["notnow", "Not now"]
+  ];
+  const FOLLOW_DAYS = { messaged: 5, replied: 2, coffee: 7, referred: 14 };
+  const DEFAULT_ORGS = "Delivery Hero, Talabat, foodpanda, Glovo, Baemin, Woowa Brothers, PedidosYa, Yemeksepeti, Hungerstation, efood, foodora, Instashop";
+  const EXAMPLE = [
+    { id: "ex1", f: "Lena", l: "(example)", c: "Moss", p: "Senior Talent Acquisition Partner", u: "", d: "2021-05-04" },
+    { id: "ex2", f: "Omar", l: "(example)", c: "Moss", p: "Head of Product", u: "", d: "2019-11-20" },
+    { id: "ex3", f: "Jonas", l: "(example)", c: "Moss", p: "Product Manager", u: "", d: "2023-02-10" },
+    { id: "ex4", f: "Sara", l: "(example)", c: "Wolt", p: "Director of Product, Merchant", u: "", d: "2018-07-01" },
+    { id: "ex5", f: "Malik", l: "(example)", c: "Talabat", p: "Senior Product Manager", u: "", d: "2017-09-15" }
+  ];
+  const EXAMPLE_TARGETS = [
+    { id: "ext1", company: "Moss", role: "Senior Product Manager", url: "", aliases: "" },
+    { id: "ext2", company: "Wolt", role: "Product Manager", url: "", aliases: "DoorDash" }
+  ];
+
+  const S = {
+    tab: "targets", contacts: [], contactsLoaded: false, example: false,
+    targets: [], outreach: {}, tags: { exdh: {} }, notes: {}, settings: {}, meta: null,
+    db: null, sample: null, mcp: null, user: null, canWrite: true, dbState: "loading",
+    drafts: {}, q: "", importing: null, confirmDelete: false, editingTarget: null, pending: false
+  };
+
+  /* ---------- helpers ---------- */
+  const $ = (s, r = document) => r.querySelector(s);
+  const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
+  const todayISO = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
+  const addDays = (iso, n) => { const d = new Date(iso + "T12:00:00"); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); };
+  const fmtDate = (iso) => { if (!iso) return ""; const d = new Date(iso + "T12:00:00"); return isNaN(d) ? iso : d.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }); };
+  const hash = (s) => { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) >>> 0; return "c" + h.toString(36); };
+  const escRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  function toast(msg) { const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast._t); toast._t = setTimeout(() => (t.hidden = true), 2600); }
+
+  const STOP = /\b(gmbh|ag|se|kg|co|corp|corporation|inc|ltd|limited|llc|plc|bv|sa|sas|srl|group|holding|holdings|the|company|technologies|technology|labs|deutschland|germany|berlin|international|global)\b/g;
+  function norm(s) {
+    return String(s || "").toLowerCase().normalize("NFKD").replace(/[̀-ͯ]/g, "")
+      .replace(/&/g, " and ").replace(STOP, " ").replace(/[^a-z0-9]+/g, " ").trim().replace(/\s+/g, " ");
+  }
+  function companyMatch(cn, tn) {
+    if (!cn || !tn) return false;
+    if (cn === tn) return true;
+    if (tn.length >= 3 && new RegExp("(^| )" + escRe(tn) + "( |$)").test(cn)) return true;
+    if (cn.length >= 4 && new RegExp("(^| )" + escRe(cn) + "( |$)").test(tn)) return true;
+    return false;
+  }
+  const orgList = () => String(S.settings.myOrgs || DEFAULT_ORGS).split(",").map(norm).filter(Boolean);
+  const isDHGroupNow = (c) => orgList().some((o) => companyMatch(c.cn, o));
+
+  function roleType(p) {
+    p = String(p || "").toLowerCase();
+    if (/recruit|talent|sourc|people partner|human resources|\bhr\b|people (and|&) culture/.test(p)) return "recruiter";
+    if (/(head|director|vp|vice president|chief|cpo|group|principal|lead)\b[^,]*product|product[^,]*\b(head|director|lead|vp)\b/.test(p)) return "leader";
+    if (/product (manager|owner)|product ops|product operations/.test(p)) return "peer";
+    if (/(engineering|tech) (manager|lead|director)|\bcto\b|head of engineering/.test(p)) return "eng";
+    return "other";
+  }
+  function scoreContact(c) {
+    const reasons = []; let s = 40;
+    const rt = roleType(c.p);
+    if (rt === "recruiter") { s += 25; reasons.push(["rec", "Recruiter"]); }
+    if (rt === "leader") { s += 25; reasons.push(["lead", "Product leader"]); }
+    if (rt === "peer") { s += 15; reasons.push(["", "Fellow PM"]); }
+    if (rt === "eng") { s += 8; reasons.push(["", "Engineering lead"]); }
+    if (S.tags.exdh[c.id]) { s += 20; reasons.push(["dh", "Ex-Delivery Hero"]); }
+    if (c.d) { const yrs = (Date.now() - new Date(c.d + "T12:00:00")) / (365 * DAY); if (yrs >= 3) { s += 5; reasons.push(["", "Connected " + new Date(c.d).getFullYear()]); } }
+    if (S.notes[c.id]) { s += 5; reasons.push(["", "Shared history noted"]); }
+    const o = S.outreach[c.id];
+    if (o && (o.status === "replied" || o.status === "coffee")) s += 10;
+    return { score: Math.min(s, 99), reasons, rt };
+  }
+  const band = (s) => (s >= 70 ? "warm" : s >= 55 ? "good" : "cold");
+  const contactById = (id) => S.contacts.find((c) => c.id === id) || (S.example ? EXAMPLE.map(prep).find((c) => c.id === id) : null);
+  function prep(c) { return { ...c, cn: norm(c.c) }; }
+  const allContacts = () => (S.example ? EXAMPLE.map(prep) : S.contacts);
+  const allTargets = () => (S.example && !S.targets.length ? EXAMPLE_TARGETS : S.targets);
+
+  function matchesFor(t) {
+    const names = [t.company, ...String(t.aliases || "").split(",")].map(norm).filter(Boolean);
+    return allContacts()
+      .filter((c) => names.some((n) => companyMatch(c.cn, n)))
+      .map((c) => ({ c, ...scoreContact(c) }))
+      .sort((a, b) => b.score - a.score || a.c.f.localeCompare(b.c.f));
+  }
+
+  /* ---------- CSV import ---------- */
+  function parseCSV(text) {
+    const rows = []; let row = [], field = "", q = false;
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      if (q) {
+        if (ch === '"') { if (text[i + 1] === '"') { field += '"'; i++; } else q = false; }
+        else field += ch;
+      } else if (ch === '"') q = true;
+      else if (ch === ",") { row.push(field); field = ""; }
+      else if (ch === "\n" || ch === "\r") {
+        if (ch === "\r" && text[i + 1] === "\n") i++;
+        row.push(field); rows.push(row); row = []; field = "";
+      } else field += ch;
+    }
+    if (field || row.length) { row.push(field); rows.push(row); }
+    return rows;
+  }
+  const MONTHS = { jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11 };
+  function parseConnected(s) {
+    s = String(s || "").trim(); if (!s) return "";
+    const m = s.match(/^(\d{1,2})\s+([A-Za-z]{3})\w*\s+(\d{4})$/);
+    if (m && m[2].toLowerCase() in MONTHS) return `${m[3]}-${String(MONTHS[m[2].toLowerCase()] + 1).padStart(2, "0")}-${m[1].padStart(2, "0")}`;
+    const d = new Date(s); return isNaN(d) ? "" : d.toISOString().slice(0, 10);
+  }
+  function contactsFromCSV(text) {
+    const rows = parseCSV(text.replace(/^﻿/, ""));
+    const hi = rows.findIndex((r) => r.some((x) => /^first name$/i.test(x.trim())));
+    if (hi < 0) throw new Error("This file doesn't look like LinkedIn's Connections.csv. Look for the file named Connections.csv inside the archive LinkedIn emailed you.");
+    const h = rows[hi].map((x) => x.trim().toLowerCase());
+    const col = (name) => h.indexOf(name);
+    const iF = col("first name"), iL = col("last name"), iU = col("url"), iE = col("email address"), iC = col("company"), iP = col("position"), iD = col("connected on");
+    const out = [], seen = new Set();
+    for (const r of rows.slice(hi + 1)) {
+      const f = (r[iF] || "").trim(), l = (r[iL] || "").trim();
+      if (!f && !l) continue;
+      const u = iU >= 0 ? (r[iU] || "").trim() : "";
+      const id = hash(u || `${f}|${l}|${r[iC] || ""}`);
+      if (seen.has(id)) continue; seen.add(id);
+      out.push({ id, f, l, u, e: iE >= 0 ? (r[iE] || "").trim() : "", c: (r[iC] || "").trim(), p: (r[iP] || "").trim(), d: parseConnected(r[iD]) });
+    }
+    return out;
+  }
+  async function importFile(file) {
+    if (!S.db) { toast("Saving isn't available in this view."); return; }
+    let list;
+    try { list = contactsFromCSV(await file.text()); }
+    catch (e) { S.importing = { error: e.message }; render(); return; }
+    if (!list.length) { S.importing = { error: "No connections found in that file." }; render(); return; }
+    const CHUNK = 400, n = Math.ceil(list.length / CHUNK);
+    const oldChunks = S.meta?.chunks || 0;
+    S.importing = { done: 0, total: n }; render();
+    try {
+      for (let i = 0; i < n; i++) {
+        await S.db.collection("contacts").doc("chunk" + i).set({ items: list.slice(i * CHUNK, (i + 1) * CHUNK) });
+        S.importing.done = i + 1; renderNotice();
+      }
+      for (let i = n; i < oldChunks; i++) await S.db.collection("contacts").doc("chunk" + i).delete();
+      await S.db.doc("meta/import").set({ count: list.length, chunks: n, importedAt: new Date().toISOString(), fileName: file.name.slice(0, 120) });
+      S.contacts = list.map(prep); S.contactsLoaded = true; S.example = false; S.importing = null;
+      toast(`Imported ${list.length.toLocaleString()} connections`); S.tab = "targets"; render();
+    } catch (e) {
+      S.importing = { error: e?.code === "quota_exceeded" ? "Storage is full. Delete the imported contacts in Settings and try again." : "The import stopped part-way (" + (e?.code || "error") + "). Try again." };
+      render();
+    }
+  }
+  async function deleteContacts() {
+    const n = S.meta?.chunks || 0;
+    for (let i = 0; i < n; i++) await S.db.collection("contacts").doc("chunk" + i).delete();
+    await S.db.doc("meta/import").delete();
+    S.contacts = []; S.confirmDelete = false; toast("Imported contacts deleted"); render();
+  }
+
+  /* ---------- persistence ---------- */
+  const queues = {};
+  function writeDoc(path, data, merge) {
+    if (!S.db) return Promise.resolve();
+    const run = () => (merge ? S.db.doc(path).update(data) : S.db.doc(path).set(data)).catch((e) => {
+      if (e?.code === "invalid_argument" && !S.user?.isOwner?.()) { S.canWrite = false; render(); }
+      toast(e?.code === "quota_exceeded" ? "Storage is full." : "Couldn't save. Try again.");
+    });
+    queues[path] = (queues[path] || Promise.resolve()).then(run, run);
+    return queues[path];
+  }
+  function saveOutreach(cid, patch) {
+    const c = contactById(cid); if (!c) return;
+    const prev = S.outreach[cid] || { contactId: cid, status: "none", history: [] };
+    const next = { ...prev, ...patch, name: `${c.f} ${c.l}`.trim(), company: c.c, position: c.p, url: c.u || "", updatedAt: new Date().toISOString() };
+    S.outreach[cid] = next;
+    if (S.example) { render(); return; }
+    writeDoc("outreach/" + cid, next);
+  }
+  function setStatus(cid, targetId, status) {
+    const t = todayISO();
+    const prev = S.outreach[cid] || {};
+    const history = [...(prev.history || []), { at: t, status }].slice(-20);
+    const patch = { status, targetId: targetId || prev.targetId || "", history };
+    if (status === "messaged" && !prev.firstContact) patch.firstContact = t;
+    if (status !== "none") patch.lastContact = t;
+    patch.nextFollowUp = FOLLOW_DAYS[status] ? addDays(t, FOLLOW_DAYS[status]) : "";
+    saveOutreach(cid, patch); render();
+  }
+
+  /* ---------- Claude drafting ---------- */
+  function buildPrompt(c, t, rt) {
+    const s = S.settings;
+    const goal = {
+      recruiter: "They are a recruiter: ask whether they are the right person for this role, and briefly what the process looks like.",
+      leader: "They likely lead product: show one line of relevant proof and ask for a 15-minute chat about the team's priorities.",
+      peer: "They are a fellow product manager: ask what the team is like and, if it feels right after a chat, whether they would be comfortable referring Sameh.",
+      eng: "They lead engineering: ask for a short chat about how product and engineering work together there, and who the hiring manager is.",
+      other: "Ask whether they could point Sameh to the right person for this role, or share what it's like to work there."
+    }[rt];
+    const shared = [S.tags.exdh[c.id] ? "They also worked at Delivery Hero / Talabat in the past (true shared history)." : "",
+      S.notes[c.id] ? "Shared history noted by Sameh: " + S.notes[c.id] : ""].filter(Boolean).join(" ");
+    return `Write one short LinkedIn direct message from Sameh Basaly to ${c.f}.
+
+About Sameh (use only what is relevant; never invent facts):
+${(s.highlights || "Senior Product Manager, AI & CRM, 9 years at Delivery Hero.").slice(0, 3000)}
+
+Recipient: ${c.f} ${c.l}, ${c.p || "role unknown"} at ${c.c}.${c.d ? " Connected on LinkedIn since " + fmtDate(c.d) + "." : ""}
+Shared history: ${shared || "None known. Do not claim any."}
+Purpose: Sameh is applying for "${t.role || "a product role"}" at ${t.company}${t.url ? " (" + t.url + ")" : ""}.
+Goal for this person: ${goal}
+${s.tone ? "Extra instructions from Sameh: " + s.tone.slice(0, 500) : ""}
+
+Rules: 60 to 120 words. Warm, direct, plain English, first person. Open with a specific, true reason for writing: the shared history if there is one, otherwise the role. Include one concrete line of proof from Sameh's background that fits this role. Make one small, clear ask. No flattery, no "I hope this finds you well", no emojis, no hashtags, no subject line, no placeholders in brackets. Sign off with "Best, Sameh". Reply with only the message text.`;
+  }
+  const SAMPLE_ERR = {
+    not_granted: "Claude isn't allowed on this page. Allow it when asked, or reload.", sampling_disabled: "Claude isn't available for this account.",
+    rate_limited: "Too many requests right now. Wait a minute, then try again.", session_expired: "Sign in to claude.ai again, then retry.",
+    refused: "Claude declined this one. Edit the notes and try again.", empty_completion: "No text came back. Try again.",
+    prompt_too_large: "Your highlights are too long. Shorten them in Settings."
+  };
+  async function draftFor(key, cid, tid) {
+    const c = contactById(cid), t = allTargets().find((x) => x.id === tid);
+    if (!c || !t || !S.sample) return;
+    const d = S.drafts[key] = { text: "", busy: true, error: "", ctl: new AbortController() };
+    render();
+    try {
+      const { text } = await S.sample(buildPrompt(c, t, roleType(c.p)), {
+        signal: d.ctl.signal, cache: false,
+        onText: ({ text }) => { d.text = text; const ta = document.getElementById("ta-" + key); if (ta) ta.value = text; }
+      });
+      d.text = text;
+    } catch (e) {
+      d.text = e?.text || d.text;
+      if (e?.code !== "cancelled") d.error = SAMPLE_ERR[e?.code] || "The draft was interrupted. Try again.";
+    }
+    d.busy = false; render();
+  }
+
+  /* ---------- calendar ---------- */
+  const MCP_ERR = {
+    server_not_connected: "Add Google Calendar in claude.ai Settings → Connectors.",
+    needs_reauth: "Reconnect Google Calendar in claude.ai Settings → Connectors.",
+    not_in_manifest: "Calendar access wasn't allowed for this page.",
+    selection_required: "Choose which Google Calendar to use when claude.ai asks.",
+    blocked_by_policy: "Your organisation blocks this calendar action."
+  };
+  async function addReminder(cid) {
+    const o = S.outreach[cid]; const c = contactById(cid);
+    if (!S.mcp || !o?.nextFollowUp || !c) return;
+    const t = allTargets().find((x) => x.id === o.targetId);
+    try {
+      await S.mcp.callTool("Google Calendar", "create_event", {
+        summary: `Follow up: ${c.f} ${c.l}${t ? " (" + t.company + ")" : ""}`,
+        startTime: `${o.nextFollowUp}T09:00:00`, endTime: `${o.nextFollowUp}T09:15:00`, timeZone: "Europe/Berlin",
+        description: `${c.p || ""} at ${c.c}. Status: ${(STATUS.find((s) => s[0] === o.status) || [])[1] || ""}.${c.u ? "\n" + c.u : ""}`
+      });
+      saveOutreach(cid, { reminderFor: o.nextFollowUp }); toast("Reminder added to Google Calendar");
+    } catch (e) { toast(MCP_ERR[e?.code] || (e?.code === "tool_error" ? "Google Calendar refused: " + (e.message || "") : "Couldn't add the reminder. Try again.")); }
+  }
+
+  /* ---------- rendering ---------- */
+  function statusPill(st) { const s = STATUS.find((x) => x[0] === (st || "none")) || STATUS[0]; return `<span class="status st-${s[0]}">${s[1]}</span>`; }
+  function statusSelect(cid, tid, cur) {
+    return `<select data-act="status" data-cid="${esc(cid)}" data-tid="${esc(tid || "")}" aria-label="Status" ${S.canWrite ? "" : "disabled"}>${STATUS.map(([k, v]) => `<option value="${k}" ${k === (cur || "none") ? "selected" : ""}>${v}</option>`).join("")}</select>`;
+  }
+  function dueItems() {
+    const limit = addDays(todayISO(), 3);
+    return Object.values(S.outreach).filter((o) => o.nextFollowUp && o.nextFollowUp <= limit && o.status !== "notnow")
+      .sort((a, b) => a.nextFollowUp.localeCompare(b.nextFollowUp));
+  }
+  function renderStats() {
+    const active = Object.values(S.outreach).filter((o) => o.status && o.status !== "none").length;
+    const due = dueItems().filter((o) => o.nextFollowUp <= todayISO()).length;
+    const cc = allContacts().length;
+    $("#stats").innerHTML = `
+      <div class="stat"><b>${cc.toLocaleString()}</b><span>${S.example ? "example contacts" : "connections"}</span></div>
+      <div class="stat"><b>${allTargets().length}</b><span>target roles</span></div>
+      <div class="stat"><b>${active}</b><span>conversations</span></div>
+      <div class="stat ${due ? "alert" : ""}"><b>${due}</b><span>follow-ups due</span></div>`;
+  }
+  function renderNotice() {
+    let h = "";
+    if (S.dbState === "unavailable") h = `<div class="banner">Saving isn't available in this view, so nothing you change here is kept. Open the page from your claude.ai artifacts while signed in.</div>`;
+    else if (!S.canWrite) h = `<div class="banner">This page is read-only for you. Only its owner can see and change the data.</div>`;
+    else if (S.importing && !S.importing.error) h = `<div class="banner info">Importing… <span class="mono">${S.importing.done}/${S.importing.total}</span> batches saved. Keep this page open.</div>`;
+    else if (S.importing?.error) h = `<div class="banner">${esc(S.importing.error)}</div>`;
+    else if (S.example) h = `<div class="banner info"><b>You're looking at example data.</b> Import your LinkedIn connections in Settings to see your real network. Nothing here is saved.</div>`;
+    $("#notice").innerHTML = h;
+  }
+  function renderTabs() {
+    const due = dueItems().length;
+    const tabs = [["targets", "Targets", allTargets().length], ["followups", "Follow-ups", due], ["contacts", "Contacts", allContacts().length], ["settings", "Settings", null]];
+    $("#tabs").innerHTML = tabs.map(([k, v, n]) => `<button role="tab" data-act="tab" data-tab="${k}" aria-selected="${S.tab === k}">${v}${n != null ? `<span class="count">${n}</span>` : ""}</button>`).join("");
+  }
+
+  function personCard(m, t) {
+    const c = m.c, o = S.outreach[c.id] || {}, key = t.id + "__" + c.id, d = S.drafts[key];
+    const dhNow = isDHGroupNow(c);
+    const chips = m.reasons.map(([cls, txt]) => `<span class="chip ${cls}">${esc(txt)}</span>`).join("") + (dhNow ? `<span class="chip dh">At DH group now</span>` : "");
+    const draftBox = d ? `<div class="draft">
+        <textarea id="ta-${esc(key)}" data-live="1" data-act="draft-edit" data-key="${esc(key)}" aria-label="Message draft">${esc(d.text)}</textarea>
+        ${d.busy && !d.text ? `<p class="muted small">Thinking… the first words take 5–30 seconds.</p>` : ""}
+        ${d.error ? `<p class="small" style="color:var(--danger)">${esc(d.error)}</p>` : ""}
+        <div class="row">
+          ${d.busy ? `<button data-act="stop" data-key="${esc(key)}">Stop</button>` : `<button class="primary" data-act="copy" data-key="${esc(key)}">Copy message</button>
+          <button data-act="draft" data-cid="${esc(c.id)}" data-tid="${esc(t.id)}">Write another</button>
+          <button class="ghost" data-act="mark-sent" data-cid="${esc(c.id)}" data-tid="${esc(t.id)}">I sent it</button>`}
+          ${c.u ? `<a class="btn ghost" href="${esc(c.u)}" target="_blank" rel="noopener">Open LinkedIn profile ↗</a>` : ""}
+        </div></div>` : "";
+    return `<div class="person">
+      <div class="person-top">
+        <span class="score ${band(m.score)}" title="Warmth score">${m.score}</span>
+        <div class="who"><b>${esc(c.f)} ${esc(c.l)}</b><span>${esc(c.p || "Title not listed")} · ${esc(c.c)}</span></div>
+        ${statusPill(o.status)}
+      </div>
+      ${chips ? `<div class="chips">${chips}</div>` : ""}
+      <div class="row">
+        ${S.sample ? `<button data-act="draft" data-cid="${esc(c.id)}" data-tid="${esc(t.id)}" ${d?.busy ? "disabled" : ""}>Draft message with Claude</button>` : ""}
+        ${statusSelect(c.id, t.id, o.status)}
+        ${!S.example ? `<label class="toggle"><input type="checkbox" data-act="exdh" data-cid="${esc(c.id)}" ${S.tags.exdh[c.id] ? "checked" : ""} ${S.canWrite ? "" : "disabled"}> Ex-DH / Talabat</label>` : ""}
+        ${o.nextFollowUp ? `<span class="small ${o.nextFollowUp <= todayISO() ? "due" : "muted"}">Follow up ${fmtDate(o.nextFollowUp)}</span>` : ""}
+      </div>
+      ${draftBox}
+    </div>`;
+  }
+  function targetForm(t) {
+    t = t || {};
+    return `<form class="stack" data-form="target" data-id="${esc(t.id || "")}">
+      <div class="grid2">
+        <label class="field">Company<input data-live="1" type="text" id="tf-company" name="company" required value="${esc(t.company)}" placeholder="e.g. N26"></label>
+        <label class="field">Role you're applying for<input data-live="1" type="text" id="tf-role" name="role" value="${esc(t.role)}" placeholder="e.g. Senior Product Manager, AI"></label>
+        <label class="field">Job link (optional)<input data-live="1" type="url" id="tf-url" name="url" value="${esc(t.url)}" placeholder="https://"></label>
+        <label class="field">Other company names (optional)<input data-live="1" type="text" id="tf-aliases" name="aliases" value="${esc(t.aliases)}" placeholder="e.g. DoorDash, Wolt Enterprises"></label>
+      </div>
+      <div class="row"><button class="primary" type="submit">${t.id ? "Save target" : "Add target"}</button>${t.id ? `<button type="button" data-act="cancel-edit">Cancel</button>` : ""}</div>
+    </form>`;
+  }
+  function renderTargets() {
+    const ts = allTargets();
+    const noContacts = !allContacts().length;
+    let h = `<section class="panel"><div class="row spread"><h2>Add a target role</h2></div>${S.canWrite ? targetForm(null) : `<p class="muted">Read-only.</p>`}</section>`;
+    if (noContacts) h += importEmpty();
+    if (!ts.length) h += `<section class="panel empty"><h3>No targets yet</h3><p class="muted">Add a company and role above. Warm Paths lists everyone you know there, warmest first.</p></section>`;
+    for (const t of ts) {
+      const ms = matchesFor(t);
+      const editing = S.editingTarget === t.id;
+      h += `<section class="panel target">
+        <div class="target-head">
+          <div class="stack" style="gap:2px;min-width:0">
+            <span class="eyebrow">${esc(t.company)}</span>
+            <h2>${esc(t.role || "Role not set")}</h2>
+            ${t.url ? `<a class="small" href="${esc(t.url)}" target="_blank" rel="noopener">Job posting ↗</a>` : ""}
+          </div>
+          <div class="row">
+            <span class="small muted">${ms.length ? `${ms.length} ${ms.length === 1 ? "person" : "people"} you know` : "Nobody you know yet"}</span>
+            ${S.canWrite && !t.id.startsWith("ext") ? `<button class="ghost" data-act="edit-target" data-id="${esc(t.id)}">Edit</button><button class="ghost danger" data-act="del-target" data-id="${esc(t.id)}">Remove</button>` : ""}
+          </div>
+        </div>
+        ${editing ? targetForm(t) : ""}
+        ${ms.length ? `<div class="people">${ms.slice(0, 25).map((m) => personCard(m, t)).join("")}</div>${ms.length > 25 ? `<p class="small muted">Showing the 25 warmest of ${ms.length}.</p>` : ""}`
+          : `<p class="muted small">No connections at ${esc(t.company)}. Check the spelling, add other names the company uses (Edit), or look for 2nd-degree contacts on LinkedIn and ask a mutual connection for an intro.</p>`}
+      </section>`;
+    }
+    return h;
+  }
+  function renderFollowups() {
+    const items = dueItems(); const t = todayISO();
+    const active = Object.values(S.outreach).filter((o) => o.status && o.status !== "none" && !items.includes(o))
+      .sort((a, b) => (b.updatedAt || "").localeCompare(a.updatedAt || ""));
+    const row = (o) => {
+      const tg = allTargets().find((x) => x.id === o.targetId);
+      return `<div class="person"><div class="person-top">
+          <span class="score ${o.nextFollowUp && o.nextFollowUp <= t ? "warm" : "cold"}">${o.nextFollowUp ? esc(o.nextFollowUp.slice(5).replace("-", "/")) : "—"}</span>
+          <div class="who"><b>${esc(o.name)}</b><span>${esc(o.position || "")} · ${esc(o.company || "")}${tg ? " · for " + esc(tg.role || tg.company) : ""}</span></div>
+          ${statusPill(o.status)}</div>
+        <div class="row">${statusSelect(o.contactId, o.targetId, o.status)}
+          ${S.canWrite ? `<label class="field" style="grid-auto-flow:column;align-items:center;gap:6px">Next<input type="date" data-act="followup-date" data-cid="${esc(o.contactId)}" value="${esc(o.nextFollowUp || "")}" style="width:auto"></label>` : ""}
+          ${S.mcp && o.nextFollowUp && !S.example ? `<button data-act="remind" data-cid="${esc(o.contactId)}">${o.reminderFor === o.nextFollowUp ? "Reminder added ✓" : "Add to Google Calendar"}</button>` : ""}
+          ${o.url ? `<a class="btn ghost" href="${esc(o.url)}" target="_blank" rel="noopener">Profile ↗</a>` : ""}
+        </div>
+        ${o.lastContact ? `<p class="small muted">Last contact ${fmtDate(o.lastContact)}${o.firstContact ? " · first message " + fmtDate(o.firstContact) : ""}</p>` : ""}
+      </div>`;
+    };
+    return `<section class="panel"><h2>Due in the next 3 days</h2>
+      ${items.length ? `<div class="people">${items.map(row).join("")}</div>` : `<p class="muted">Nothing due. When you mark someone as Messaged, a follow-up is scheduled 5 days later.</p>`}
+      </section>
+      <section class="panel"><h2>All conversations</h2>
+      ${active.length ? `<div class="people">${active.map(row).join("")}</div>` : `<p class="muted">No conversations yet. Draft a message from a target, send it on LinkedIn, then mark it as sent.</p>`}
+      </section>`;
+  }
+  function renderContacts() {
+    const all = allContacts();
+    if (!all.length) return importEmpty();
+    const q = norm(S.q);
+    const list = (q ? all.filter((c) => norm(`${c.f} ${c.l} ${c.c} ${c.p}`).includes(q)) : all.filter((c) => S.tags.exdh[c.id] || isDHGroupNow(c))).slice(0, 100);
+    return `<section class="panel">
+      <label class="field">Search your connections<input type="search" id="contact-q" data-live="1" data-act="search" value="${esc(S.q)}" placeholder="Name, company or title"></label>
+      <p class="small muted">${q ? `${list.length >= 100 ? "First 100 matches" : list.length + " matches"}` : "Showing people at Delivery Hero group companies and anyone you've marked ex-DH. Search to find others."} Mark ex-colleagues so they rank higher, and add a line of shared history for better drafts.</p>
+      <div class="list-compact">${list.map((c) => `<div class="contact-row">
+        <div class="who"><b>${esc(c.f)} ${esc(c.l)}</b><span>${esc(c.p || "")}${c.p ? " · " : ""}${esc(c.c || "")}</span>
+          <details><summary>Shared history${S.notes[c.id] ? " ✓" : ""}</summary>
+          <textarea id="note-${esc(c.id)}" data-live="1" data-act="note" data-cid="${esc(c.id)}" rows="2" placeholder="e.g. We launched the Talabat vendor app together in 2019" ${S.canWrite && !S.example ? "" : "disabled"}>${esc(S.notes[c.id] || "")}</textarea></details></div>
+        <label class="toggle"><input type="checkbox" data-act="exdh" data-cid="${esc(c.id)}" ${S.tags.exdh[c.id] ? "checked" : ""} ${S.canWrite && !S.example ? "" : "disabled"}> Ex-DH</label>
+      </div>`).join("") || `<p class="muted">No matches.</p>`}</div></section>`;
+  }
+  function importEmpty() {
+    return `<section class="panel empty">
+      <h2>Import your LinkedIn connections</h2>
+      <ol class="steps">
+        <li>On LinkedIn, open <b>Me → Settings &amp; Privacy → Data privacy → Get a copy of your data</b>.</li>
+        <li>Choose <b>Connections</b> only, then <b>Request archive</b>. LinkedIn emails you a link, usually within 10 minutes.</li>
+        <li>Download the ZIP, open it, and pick the file <b>Connections.csv</b> below.</li>
+      </ol>
+      <div class="row">
+        ${S.canWrite && S.db ? `<label class="btn primary" for="csv-file">Choose Connections.csv</label><input type="file" id="csv-file" accept=".csv,text/csv" data-act="file" hidden>` : ""}
+        ${!S.example ? `<button data-act="example">Try it with example data</button>` : `<button data-act="example-off">Hide example data</button>`}
+      </div>
+      <p class="small muted">Your connections are stored privately in this page. Only you, the owner, can read them. LinkedIn exports don't include past employers, so mark ex-Delivery Hero colleagues yourself in Contacts.</p>
+    </section>`;
+  }
+  function renderSettings() {
+    const s = S.settings, m = S.meta;
+    return `<section class="panel">
+      <h2>Your highlights</h2>
+      <p class="small muted">Claude uses these in every message. Keep them factual; it won't add anything you don't list.</p>
+      <form class="stack" data-form="settings">
+        <label class="field">Highlights<textarea data-live="1" id="set-highlights" name="highlights" rows="8" placeholder="Senior Product Manager, AI & CRM…">${esc(s.highlights || "")}</textarea></label>
+        <label class="field">Companies that count as your old network (comma-separated)<input data-live="1" type="text" id="set-orgs" name="myOrgs" value="${esc(s.myOrgs || DEFAULT_ORGS)}"></label>
+        <label class="field">Extra instructions for drafts (optional)<input data-live="1" type="text" id="set-tone" name="tone" value="${esc(s.tone || "")}" placeholder="e.g. Mention I'm based in Berlin with permanent residence"></label>
+        <div class="row"><button class="primary" type="submit" ${S.canWrite ? "" : "disabled"}>Save settings</button></div>
+      </form>
+    </section>
+    <section class="panel">
+      <h2>Connections data</h2>
+      ${m ? `<p>${m.count.toLocaleString()} connections imported on ${fmtDate(m.importedAt.slice(0, 10))}${m.fileName ? ` from <span class="mono small">${esc(m.fileName)}</span>` : ""}.</p>` : `<p class="muted">Nothing imported yet.</p>`}
+      <div class="row">
+        ${S.canWrite && S.db ? `<label class="btn" for="csv-file2">${m ? "Re-import a newer export" : "Choose Connections.csv"}</label><input type="file" id="csv-file2" accept=".csv,text/csv" data-act="file" hidden>` : ""}
+        ${m && S.canWrite ? `<button class="danger" data-act="ask-delete">Delete imported contacts</button>` : ""}
+      </div>
+      ${S.confirmDelete ? `<div class="confirm"><p>Delete all ${m.count.toLocaleString()} imported connections? Your targets, conversations and notes stay.</p><div class="row"><button class="danger" data-act="delete">Delete</button><button data-act="cancel-delete">Keep them</button></div></div>` : ""}
+      <p class="small muted">Re-importing replaces the contact list and keeps your conversations, ex-DH marks and notes. Don't share this page publicly: it holds other people's names and job titles.</p>
+    </section>`;
+  }
+  function render() {
+    const a = document.activeElement;
+    if (a && a.dataset && a.dataset.live && $("#main").contains(a)) { S.pending = true; renderStats(); renderTabs(); return; }
+    S.pending = false;
+    renderStats(); renderNotice(); renderTabs();
+    const main = $("#main");
+    const html = S.tab === "targets" ? renderTargets() : S.tab === "followups" ? renderFollowups() : S.tab === "contacts" ? renderContacts() : renderSettings();
+    main.innerHTML = `<div class="stack" style="gap:14px">${html}</div>`;
+  }
+
+  /* ---------- events ---------- */
+  document.addEventListener("focusout", () => setTimeout(() => { if (S.pending) render(); }, 0));
+  document.addEventListener("click", async (ev) => {
+    const el = ev.target.closest("[data-act]"); if (!el || el.tagName === "SELECT" || el.tagName === "INPUT" || el.tagName === "TEXTAREA") return;
+    const act = el.dataset.act;
+    if (act === "tab") { S.tab = el.dataset.tab; render(); }
+    else if (act === "draft") draftFor(el.dataset.tid + "__" + el.dataset.cid, el.dataset.cid, el.dataset.tid);
+    else if (act === "stop") S.drafts[el.dataset.key]?.ctl.abort();
+    else if (act === "copy") {
+      const ta = document.getElementById("ta-" + el.dataset.key); const text = ta ? ta.value : "";
+      try { await navigator.clipboard.writeText(text); toast("Copied. Paste it into LinkedIn."); }
+      catch { if (ta) { ta.focus(); ta.select(); } toast("Press Ctrl/Cmd + C to copy"); }
+    }
+    else if (act === "mark-sent") { setStatus(el.dataset.cid, el.dataset.tid, "messaged"); toast("Marked as messaged. Follow-up in 5 days."); }
+    else if (act === "edit-target") { S.editingTarget = el.dataset.id; render(); }
+    else if (act === "cancel-edit") { S.editingTarget = null; render(); }
+    else if (act === "del-target") {
+      const id = el.dataset.id;
+      if (el.dataset.confirm) { S.targets = S.targets.filter((t) => t.id !== id); render(); S.db?.doc("targets/" + id).delete().catch(() => toast("Couldn't remove. Try again.")); }
+      else { el.dataset.confirm = "1"; el.textContent = "Click again to remove"; setTimeout(() => { if (el.isConnected) { delete el.dataset.confirm; el.textContent = "Remove"; } }, 4000); }
+    }
+    else if (act === "example") { S.example = true; render(); }
+    else if (act === "example-off") { S.example = false; render(); }
+    else if (act === "ask-delete") { S.confirmDelete = true; render(); }
+    else if (act === "cancel-delete") { S.confirmDelete = false; render(); }
+    else if (act === "delete") deleteContacts().catch(() => toast("Couldn't delete everything. Try again."));
+    else if (act === "remind") addReminder(el.dataset.cid);
+  });
+  document.addEventListener("change", (ev) => {
+    const el = ev.target; const act = el.dataset?.act; if (!act) return;
+    if (act === "status") setStatus(el.dataset.cid, el.dataset.tid, el.value);
+    else if (act === "exdh") {
+      const id = el.dataset.cid; const exdh = { ...S.tags.exdh };
+      if (el.checked) exdh[id] = 1; else delete exdh[id];
+      S.tags = { ...S.tags, exdh }; writeDoc("tags/main", S.tags); render();
+    }
+    else if (act === "file" && el.files?.[0]) importFile(el.files[0]);
+    else if (act === "followup-date") { saveOutreach(el.dataset.cid, { nextFollowUp: el.value }); render(); }
+    else if (act === "note") {
+      const id = el.dataset.cid; const v = el.value.trim().slice(0, 500); const notes = { ...S.notes };
+      if (v) notes[id] = v; else delete notes[id];
+      S.notes = notes; writeDoc("tags/notes", { notes }); toast("Saved");
+    }
+  });
+  document.addEventListener("input", (ev) => {
+    const el = ev.target;
+    if (el.dataset?.act === "search") { S.q = el.value; clearTimeout(render._q); render._q = setTimeout(() => { const pos = el.selectionStart; S.pending = false; const a = el; a.blur(); render(); const n = $("#contact-q"); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch {} } }, 250); }
+    else if (el.dataset?.act === "draft-edit") { const d = S.drafts[el.dataset.key]; if (d) d.text = el.value; }
+  });
+  document.addEventListener("submit", (ev) => {
+    const f = ev.target.closest("form[data-form]"); if (!f) return; ev.preventDefault();
+    const data = Object.fromEntries(new FormData(f).entries());
+    if (f.dataset.form === "target") {
+      const company = String(data.company || "").trim(); if (!company) return;
+      const id = f.dataset.id || "t" + Date.now().toString(36);
+      const prev = S.targets.find((t) => t.id === id) || { createdAt: new Date().toISOString() };
+      const t = { ...prev, id, company: company.slice(0, 120), role: String(data.role || "").trim().slice(0, 160), url: String(data.url || "").trim().slice(0, 500), aliases: String(data.aliases || "").trim().slice(0, 300) };
+      S.targets = [t, ...S.targets.filter((x) => x.id !== id)]; S.editingTarget = null;
+      if (S.example) S.example = false;
+      writeDoc("targets/" + id, t); render(); toast(f.dataset.id ? "Target saved" : "Target added");
+    } else if (f.dataset.form === "settings") {
+      S.settings = { highlights: String(data.highlights || "").slice(0, 4000), myOrgs: String(data.myOrgs || "").slice(0, 600), tone: String(data.tone || "").slice(0, 500) };
+      writeDoc("settings/profile", S.settings); render(); toast("Settings saved");
+    }
+  });
+
+  /* ---------- boot ---------- */
+  render();
+  (async () => {
+    const [db, user, sample, mcp] = await Promise.all(["db", "user", "sample", "mcp"].map((n) => (window.claude?.use ? window.claude.use(n).catch(() => null) : Promise.resolve(null))));
+    S.sample = sample; S.mcp = mcp; S.user = user;
+    if (!db) { S.dbState = "unavailable"; S.canWrite = false; render(); return; }
+    S.db = db; S.dbState = "ready";
+    try { const can = user?.can ? await user.can("data.write") : null; if (can === false) S.canWrite = false; } catch {}
+    const onErr = () => {};
+    db.collection("targets").onSnapshot((snap) => { S.targets = snap.docs.map((d) => ({ id: d.id, ...d.data() })).sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || "")); render(); }, onErr);
+    db.collection("outreach").onSnapshot((snap) => { const o = {}; snap.docs.forEach((d) => (o[d.id] = d.data())); S.outreach = o; render(); }, onErr);
+    db.doc("tags/main").onSnapshot((d) => { S.tags = { exdh: {}, ...(d.exists ? d.data() : {}) }; render(); }, onErr);
+    db.doc("tags/notes").onSnapshot((d) => { S.notes = d.exists ? { ...(d.data().notes || {}) } : {}; render(); }, onErr);
+    db.doc("settings/profile").onSnapshot((d) => { S.settings = d.exists ? { ...d.data() } : {}; render(); }, onErr);
+    try {
+      const meta = await db.doc("meta/import").get(); S.meta = meta.exists ? meta.data() : null;
+      db.doc("meta/import").onSnapshot((d) => { S.meta = d.exists ? d.data() : null; render(); }, onErr);
+      if (S.meta?.chunks) {
+        const snap = await db.collection("contacts").get();
+        S.contacts = snap.docs.flatMap((d) => d.data().items || []).map(prep);
+      }
+      S.contactsLoaded = true;
+    } catch { S.contactsLoaded = true; }
+    render();
+  })();
+})();
+</script>
