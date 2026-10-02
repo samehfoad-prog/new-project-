@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Sets up Claude Code with claude-mem (persistent memory) and Headroom
-# (context compression). Run this on your own machine, not in a cloud session.
+# Sets up Claude Code with claude-mem (persistent memory), Headroom
+# (context compression) and task-observer (self-improving skills).
+# Run this on your own machine, not in a cloud session.
 #
 #   ./setup-claude.sh            # install everything
 #   ./setup-claude.sh --check    # only report what is installed
@@ -30,6 +31,7 @@ if $CHECK_ONLY; then
   have claude   && ok "claude $(claude --version 2>/dev/null || true)" || warn "claude not installed"
   have headroom && ok "headroom installed" || warn "headroom not installed"
   [[ -d "$HOME/.claude-mem" ]] && ok "claude-mem data dir exists" || warn "claude-mem not set up"
+  [[ -f "$HOME/.claude/skills/task-observer/SKILL.md" ]] && ok "task-observer installed" || warn "task-observer not installed"
   exit 0
 fi
 
@@ -54,6 +56,42 @@ else
 fi
 headroom doctor || warn "headroom doctor reported problems; see output above"
 
+# --- task-observer ----------------------------------------------------------
+# Watches sessions for corrections and repeated workflows and proposes skill
+# improvements. Installed globally; its log lives outside the skills folder.
+OBSERVER_DIR="$HOME/.claude/skills/task-observer"
+OBSERVER_WORKSPACE="${OBSERVER_WORKSPACE:-$HOME/.claude-observer}"
+PROJECTS_ROOT="${PROJECTS_ROOT:-$HOME}"
+info "Installing task-observer skill"
+if [[ -d "$OBSERVER_DIR/.git" ]]; then
+  git -C "$OBSERVER_DIR" pull -q --ff-only
+else
+  mkdir -p "$(dirname "$OBSERVER_DIR")"
+  git clone -q --depth 1 https://github.com/rebelytics/one-skill-to-rule-them-all "$OBSERVER_DIR"
+fi
+mkdir -p "$OBSERVER_WORKSPACE/skill-observations/observation-log" "$OBSERVER_WORKSPACE/skill-updates"
+
+# The skill only runs reliably when CLAUDE.md tells it to, so copy the
+# activation block from its docs into the global CLAUDE.md with paths filled in.
+global_md="$HOME/.claude/CLAUDE.md"
+obs_begin="<!-- >>> task-observer >>> -->"
+obs_end="<!-- <<< task-observer <<< -->"
+if grep -qF "$obs_begin" "$global_md" 2>/dev/null; then
+  ok "task-observer already activated in $global_md"
+else
+  info "Activating task-observer in $global_md"
+  block=$(awk '/^### The activation block/{f=1} f&&/^```text/{p=1;next} p&&/^```/{exit} p' \
+    "$OBSERVER_DIR/references/environments.md")
+  if [[ -z "$block" ]]; then
+    warn "Couldn't find the activation block; add it by hand from $OBSERVER_DIR/references/environments.md"
+  else
+    block=${block//"[ABSOLUTE PATH]"/$OBSERVER_WORKSPACE}
+    block=${block//"[PROJECTS ROOT]"/$PROJECTS_ROOT}
+    block=${block//"<skill directory>"/$OBSERVER_DIR}
+    printf '\n%s\n%s\n%s\n' "$obs_begin" "$block" "$obs_end" >> "$global_md"
+  fi
+fi
+
 # --- shell alias ------------------------------------------------------------
 # `cc` starts Claude Code through the Headroom proxy. Headroom's own memory is
 # left off so claude-mem stays the single memory system.
@@ -76,3 +114,4 @@ fi
 info "Done. Open a new terminal and run: cc"
 echo "    Memory viewer: see the URL printed by claude-mem above"
 echo "    Savings:       headroom dashboard"
+echo "    Observations:  $OBSERVER_WORKSPACE/skill-observations/observation-log/"
