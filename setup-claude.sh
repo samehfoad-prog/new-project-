@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Sets up Claude Code with claude-mem (persistent memory), Headroom
-# (context compression) and task-observer (self-improving skills).
+# (context compression), task-observer (self-improving skills), and the
+# Humanizer, Impeccable and 21st plugins.
 # Run this on your own machine, not in a cloud session.
 #
 #   ./setup-claude.sh            # install everything
@@ -32,6 +33,13 @@ if $CHECK_ONLY; then
   have headroom && ok "headroom installed" || warn "headroom not installed"
   [[ -d "$HOME/.claude-mem" ]] && ok "claude-mem data dir exists" || warn "claude-mem not set up"
   [[ -f "$HOME/.claude/skills/task-observer/SKILL.md" ]] && ok "task-observer installed" || warn "task-observer not installed"
+  if have claude; then
+    plugins=$(claude plugin list 2>/dev/null || true)
+    for p in humanizer impeccable 21st; do
+      grep -q "$p" <<<"$plugins" && ok "plugin $p" || warn "plugin $p not installed"
+    done
+  fi
+  [[ -f "$HOME/.config/claude-setup/21st.env" ]] && ok "21st API key saved" || warn "21st API key not set"
   exit 0
 fi
 
@@ -111,7 +119,44 @@ else
   ok "'cc' alias already present in $shell_rc"
 fi
 
+# --- plugins: Humanizer, Impeccable, 21st ------------------------------------
+# Humanizer rewrites AI-sounding text; Impeccable adds design commands
+# (/impeccable audit, critique, polish...); 21st gives Claude a library of
+# React/Tailwind UI components through MCP.
+add_plugin() { # <github repo> <plugin@marketplace>
+  claude plugin marketplace add "$1" >/dev/null 2>&1 || true
+  if claude plugin install "$2" >/dev/null 2>&1; then ok "plugin $2"
+  else warn "couldn't install $2; inside Claude Code run: /plugin marketplace add $1, then /plugin install $2"; fi
+}
+info "Installing Claude Code plugins"
+add_plugin blader/humanizer   humanizer@humanizer
+add_plugin pbakaus/impeccable impeccable@impeccable
+add_plugin 21st-dev/magic-mcp 21st@21st-dev
+
+# The 21st plugin reads its key from API_KEY_21ST. Keep the key in a file only
+# you can read, and load it from the shell config.
+key_file="$HOME/.config/claude-setup/21st.env"
+if [[ ! -f "$key_file" ]]; then
+  echo "    21st needs a free API key from https://21st.dev/mcp (press Enter to skip)."
+  read -rsp "    Paste your 21st API key: " key_21st; echo
+  if [[ -n "$key_21st" ]]; then
+    mkdir -p "$(dirname "$key_file")"
+    (umask 077; printf 'export API_KEY_21ST=%q\n' "$key_21st" > "$key_file")
+    ok "saved 21st key to $key_file"
+  else
+    warn "no 21st key; run this script again once you have one"
+  fi
+fi
+key_marker="# >>> claude setup: 21st key >>>"
+if [[ -f "$key_file" ]] && ! grep -qF "$key_marker" "$shell_rc" 2>/dev/null; then
+  printf '%s\n[ -f "%s" ] && . "%s"\n# <<< claude setup: 21st key <<<\n' \
+    "$key_marker" "$key_file" "$key_file" >> "$shell_rc"
+fi
+
 info "Done. Open a new terminal and run: cc"
 echo "    Memory viewer: see the URL printed by claude-mem above"
 echo "    Savings:       headroom dashboard"
 echo "    Observations:  $OBSERVER_WORKSPACE/skill-observations/observation-log/"
+echo "    Writing:       /humanizer  (paste text, or name a file)"
+echo "    Design:        /impeccable init once per project, then audit / critique / polish"
+echo "    UI components: ask Claude to search 21st for a component"
