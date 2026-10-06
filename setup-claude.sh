@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Sets up Claude Code with claude-mem (persistent memory), Headroom
 # (context compression), task-observer (self-improving skills), and the
-# Humanizer, Impeccable, 21st and Perplexity plugins.
+# Humanizer, Impeccable, 21st and Perplexity plugins, and Playwright MCP.
 # Run this on your own machine, not in a cloud session.
 #
 #   ./setup-claude.sh            # install everything
@@ -39,6 +39,7 @@ if $CHECK_ONLY; then
       grep -q "$p" <<<"$plugins" && ok "plugin $p" || warn "plugin $p not installed"
     done
   fi
+  claude mcp get playwright >/dev/null 2>&1 && ok "Playwright MCP" || warn "Playwright MCP not added"
   for k in 21st perplexity; do
     [[ -f "$HOME/.config/claude-setup/$k.env" ]] && ok "$k API key saved" || warn "$k API key not set"
   done
@@ -137,6 +138,19 @@ add_plugin pbakaus/impeccable                impeccable@impeccable
 add_plugin 21st-dev/magic-mcp                21st@21st-dev
 add_plugin perplexityai/modelcontextprotocol perplexity@perplexity-mcp-server
 
+# Playwright MCP lets Claude open a real browser: click through your app, fill
+# forms, take screenshots, check what a page actually shows. Added for every
+# project (user scope); the browser profile persists so logins are kept.
+if claude mcp get playwright >/dev/null 2>&1; then
+  ok "Playwright MCP already added"
+elif claude mcp add --scope user playwright -- npx -y @playwright/mcp@latest >/dev/null 2>&1; then
+  ok "Playwright MCP"
+  npx -y playwright install chromium >/dev/null 2>&1 \
+    || warn "couldn't download the Playwright browser; run: npx playwright install chromium"
+else
+  warn "couldn't add Playwright MCP; run: claude mcp add --scope user playwright -- npx -y @playwright/mcp@latest"
+fi
+
 # 21st and Perplexity read their API keys from environment variables. Each key
 # goes in a file only you can read, loaded from the shell config.
 save_key() { # <name> <ENV_VAR> <where to get it>
@@ -172,3 +186,4 @@ echo "    Writing:       /humanizer  (paste text, or name a file)"
 echo "    Design:        /impeccable init once per project, then audit / critique / polish"
 echo "    UI components: ask Claude to search 21st for a component"
 echo "    Web research:  ask Claude to use Perplexity (search, ask, research, reason)"
+echo "    Browser:       ask Claude to open a page with Playwright and test or screenshot it"

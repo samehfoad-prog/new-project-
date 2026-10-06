@@ -11,6 +11,7 @@ This repo ships a Claude Code setup with:
 - **Impeccable**: design commands for front-end work. Run `/impeccable init` once per project, then `audit`, `critique` and `polish`.
 - **21st**: gives Claude a library of 10,000+ React/Tailwind UI components. Needs a free API key from [21st.dev/mcp](https://21st.dev/mcp); the script asks for it and saves it to `~/.config/claude-setup/21st.env`, readable only by you.
 - **Perplexity**: live, cited web search and deep research inside Claude Code. Needs an API key from [console.perplexity.ai](https://console.perplexity.ai) (paid per use); the script saves it to `~/.config/claude-setup/perplexity.env`, readable only by you.
+- **Playwright MCP**: lets Claude drive a real browser to click through your app, fill forms and take screenshots. Free, no key needed.
 - **CLAUDE.md**: stable project rules Claude always reads.
 - **.claude/settings.json**: auto-allows read-only git commands and blocks reading `.env` files.
 
