@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Sets up Claude Code with claude-mem (persistent memory), Headroom
 # (context compression), task-observer (self-improving skills), and the
-# Humanizer, Impeccable and 21st plugins.
+# Humanizer, Impeccable, 21st and Perplexity plugins.
 # Run this on your own machine, not in a cloud session.
 #
 #   ./setup-claude.sh            # install everything
@@ -35,11 +35,13 @@ if $CHECK_ONLY; then
   [[ -f "$HOME/.claude/skills/task-observer/SKILL.md" ]] && ok "task-observer installed" || warn "task-observer not installed"
   if have claude; then
     plugins=$(claude plugin list 2>/dev/null || true)
-    for p in humanizer impeccable 21st; do
+    for p in humanizer impeccable 21st perplexity; do
       grep -q "$p" <<<"$plugins" && ok "plugin $p" || warn "plugin $p not installed"
     done
   fi
-  [[ -f "$HOME/.config/claude-setup/21st.env" ]] && ok "21st API key saved" || warn "21st API key not set"
+  for k in 21st perplexity; do
+    [[ -f "$HOME/.config/claude-setup/$k.env" ]] && ok "$k API key saved" || warn "$k API key not set"
+  done
   exit 0
 fi
 
@@ -119,39 +121,48 @@ else
   ok "'cc' alias already present in $shell_rc"
 fi
 
-# --- plugins: Humanizer, Impeccable, 21st ------------------------------------
+# --- plugins: Humanizer, Impeccable, 21st, Perplexity -------------------------
 # Humanizer rewrites AI-sounding text; Impeccable adds design commands
 # (/impeccable audit, critique, polish...); 21st gives Claude a library of
-# React/Tailwind UI components through MCP.
+# React/Tailwind UI components; Perplexity gives Claude live, cited web search
+# and deep research.
 add_plugin() { # <github repo> <plugin@marketplace>
   claude plugin marketplace add "$1" >/dev/null 2>&1 || true
   if claude plugin install "$2" >/dev/null 2>&1; then ok "plugin $2"
   else warn "couldn't install $2; inside Claude Code run: /plugin marketplace add $1, then /plugin install $2"; fi
 }
 info "Installing Claude Code plugins"
-add_plugin blader/humanizer   humanizer@humanizer
-add_plugin pbakaus/impeccable impeccable@impeccable
-add_plugin 21st-dev/magic-mcp 21st@21st-dev
+add_plugin blader/humanizer                  humanizer@humanizer
+add_plugin pbakaus/impeccable                impeccable@impeccable
+add_plugin 21st-dev/magic-mcp                21st@21st-dev
+add_plugin perplexityai/modelcontextprotocol perplexity@perplexity-mcp-server
 
-# The 21st plugin reads its key from API_KEY_21ST. Keep the key in a file only
-# you can read, and load it from the shell config.
-key_file="$HOME/.config/claude-setup/21st.env"
-if [[ ! -f "$key_file" ]]; then
-  echo "    21st needs a free API key from https://21st.dev/mcp (press Enter to skip)."
-  read -rsp "    Paste your 21st API key: " key_21st; echo
-  if [[ -n "$key_21st" ]]; then
-    mkdir -p "$(dirname "$key_file")"
-    (umask 077; printf 'export API_KEY_21ST=%q\n' "$key_21st" > "$key_file")
-    ok "saved 21st key to $key_file"
-  else
-    warn "no 21st key; run this script again once you have one"
+# 21st and Perplexity read their API keys from environment variables. Each key
+# goes in a file only you can read, loaded from the shell config.
+save_key() { # <name> <ENV_VAR> <where to get it>
+  local key_file="$HOME/.config/claude-setup/$1.env" key
+  if [[ ! -f "$key_file" ]]; then
+    echo "    $1 needs an API key from $3 (press Enter to skip)."
+    read -rsp "    Paste your $1 API key: " key; echo
+    if [[ -n "$key" ]]; then
+      mkdir -p "$(dirname "$key_file")"
+      (umask 077; printf 'export %s=%q\n' "$2" "$key" > "$key_file")
+      ok "saved $1 key to $key_file"
+    else
+      warn "no $1 key; run this script again once you have one"
+    fi
   fi
-fi
-key_marker="# >>> claude setup: 21st key >>>"
-if [[ -f "$key_file" ]] && ! grep -qF "$key_marker" "$shell_rc" 2>/dev/null; then
-  printf '%s\n[ -f "%s" ] && . "%s"\n# <<< claude setup: 21st key <<<\n' \
-    "$key_marker" "$key_file" "$key_file" >> "$shell_rc"
-fi
+  local marker="# >>> claude setup: $1 key >>>"
+  if [[ -f "$key_file" ]] && ! grep -qF "$marker" "$shell_rc" 2>/dev/null; then
+    printf '%s\n[ -f "%s" ] && . "%s"\n# <<< claude setup: %s key <<<\n' \
+      "$marker" "$key_file" "$key_file" "$1" >> "$shell_rc"
+  fi
+}
+save_key 21st       API_KEY_21ST       https://21st.dev/mcp
+save_key perplexity PERPLEXITY_API_KEY https://console.perplexity.ai
+# Deep research can take several minutes; allow up to 10 before timing out.
+grep -qF "PERPLEXITY_TIMEOUT_MS" "$shell_rc" 2>/dev/null \
+  || echo 'export PERPLEXITY_TIMEOUT_MS=600000  # claude setup: Perplexity deep research' >> "$shell_rc"
 
 info "Done. Open a new terminal and run: cc"
 echo "    Memory viewer: see the URL printed by claude-mem above"
@@ -160,3 +171,4 @@ echo "    Observations:  $OBSERVER_WORKSPACE/skill-observations/observation-log/
 echo "    Writing:       /humanizer  (paste text, or name a file)"
 echo "    Design:        /impeccable init once per project, then audit / critique / polish"
 echo "    UI components: ask Claude to search 21st for a component"
+echo "    Web research:  ask Claude to use Perplexity (search, ask, research, reason)"
