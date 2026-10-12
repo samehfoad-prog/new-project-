@@ -1,0 +1,441 @@
+<title>Apply Desk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: one working column. Paste a job ad → fit verdict → ready-to-paste application kit → pipeline. Same visual family as Warm Paths. */
+:root {
+  --bg: #f3f6fa; --surface: #ffffff; --sunk: #e9eef5; --ink: #0f2238; --muted: #56677d; --line: #d6dfea;
+  --accent: #0b62c4; --accent-soft: #e3effc; --on-accent: #ffffff; --navy: #06305c;
+  --warm: #b4500d; --warm-soft: #fdf0e4; --good: #1d7a46; --good-soft: #e5f5ec; --cold: #6b7a8f; --cold-soft: #eef1f5;
+  --danger: #b42323; --danger-soft: #fbe9e9;
+  --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0b1622; --surface: #112133; --sunk: #0e1c2b; --ink: #e5edf6; --muted: #93a6bb; --line: #23384f;
+  --accent: #4ea3ff; --accent-soft: #14304d; --on-accent: #06182a; --navy: #a9cdf5;
+  --warm: #f0a062; --warm-soft: #3a2414; --good: #5fcf8f; --good-soft: #12301f; --cold: #9aa9bb; --cold-soft: #1a2a3b;
+  --danger: #ff8a8a; --danger-soft: #3a1717; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0b1622; --surface: #112133; --sunk: #0e1c2b; --ink: #e5edf6; --muted: #93a6bb; --line: #23384f;
+  --accent: #4ea3ff; --accent-soft: #14304d; --on-accent: #06182a; --navy: #a9cdf5;
+  --warm: #f0a062; --warm-soft: #3a2414; --good: #5fcf8f; --good-soft: #12301f; --cold: #9aa9bb; --cold-soft: #1a2a3b;
+  --danger: #ff8a8a; --danger-soft: #3a1717; color-scheme: dark; }
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.5 var(--body); margin: 0; }
+.wrap { max-width: 980px; margin: 0 auto; padding-inline: 16px; padding-block: 20px 48px; display: grid; gap: 18px; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; color: var(--navy); }
+h1 { font-size: 30px; letter-spacing: -.01em; }
+h2 { font-size: 20px; }
+h3 { font-size: 15px; }
+p { margin: 0; }
+a { color: var(--accent); }
+.muted { color: var(--muted); }
+.small { font-size: 13px; }
+.mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.eyebrow { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+
+header.top { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px; }
+.stats { display: flex; flex-wrap: wrap; gap: 8px; }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; min-width: 104px; }
+.stat b { display: block; font-family: var(--mono); font-size: 18px; color: var(--ink); }
+.stat span { font-size: 12px; color: var(--muted); }
+.meter { height: 4px; background: var(--sunk); border-radius: 4px; margin-top: 6px; overflow: hidden; }
+.meter i { display: block; height: 100%; background: var(--accent); }
+
+nav.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); overflow-x: auto; }
+nav.tabs button { background: none; border: 0; border-bottom: 3px solid transparent; padding: 10px 12px; font: 600 14px var(--body); color: var(--muted); cursor: pointer; white-space: nowrap; border-radius: 0; }
+nav.tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+nav.tabs .count { font-family: var(--mono); font-size: 12px; margin-left: 4px; }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: grid; gap: 12px; min-width: 0; }
+.banner { background: var(--warm-soft); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; font-size: 14px; }
+.banner.info { background: var(--accent-soft); }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.spread { justify-content: space-between; }
+.stack { display: grid; gap: 10px; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+
+button, .btn { font: 600 14px var(--body); border-radius: 8px; padding: 8px 12px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+button.primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+button.ghost { background: transparent; }
+button.danger { color: var(--danger); }
+button.sm { padding: 4px 9px; font-size: 13px; }
+button:disabled { opacity: .55; cursor: default; }
+button:focus-visible, .btn:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+input[type="text"], input[type="url"], input[type="date"], input[type="number"], select, textarea {
+  font: 14px var(--body); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; width: 100%; min-width: 0; }
+textarea { resize: vertical; line-height: 1.5; }
+label.field { display: grid; gap: 4px; font-size: 13px; font-weight: 600; color: var(--muted); }
+
+.verdict { display: grid; grid-template-columns: auto 1fr; gap: 14px; align-items: center; }
+.dial { width: 74px; height: 74px; border-radius: 50%; display: grid; place-items: center; font-family: var(--mono); font-size: 22px; font-weight: 500;
+  background: conic-gradient(var(--dial) calc(var(--v) * 1%), var(--sunk) 0); position: relative; }
+.dial::after { content: ""; position: absolute; inset: 7px; border-radius: 50%; background: var(--surface); }
+.dial span { position: relative; z-index: 1; }
+.v-apply { --dial: var(--good); } .v-care { --dial: var(--warm); } .v-skip { --dial: var(--danger); }
+.pill { font-size: 12px; font-weight: 600; border-radius: 999px; padding: 3px 10px; white-space: nowrap; display: inline-block; }
+.p-apply { background: var(--good-soft); color: var(--good); }
+.p-care { background: var(--warm-soft); color: var(--warm); }
+.p-skip { background: var(--danger-soft); color: var(--danger); }
+.p-de-none { background: var(--good-soft); color: var(--good); }
+.p-de-nice { background: var(--warm-soft); color: var(--warm); }
+.p-de-req { background: var(--danger-soft); color: var(--danger); }
+ul.clean { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.kit { display: grid; gap: 10px; }
+.block { border: 1px solid var(--line); border-radius: 10px; background: var(--bg); padding: 12px; display: grid; gap: 8px; min-width: 0; }
+.block-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.block pre { margin: 0; white-space: pre-wrap; font: 14px/1.55 var(--body); overflow-wrap: anywhere; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-size: 12px; font-weight: 600; border-radius: 999px; padding: 2px 9px; background: var(--sunk); color: var(--muted); border: 1px solid var(--line); }
+.qa { display: grid; grid-template-columns: minmax(120px, 170px) 1fr auto; gap: 8px 12px; align-items: start; border-top: 1px solid var(--line); padding-top: 8px; }
+.qa:first-child { border-top: 0; padding-top: 0; }
+.qa b { font-size: 13px; color: var(--muted); }
+.qa p { overflow-wrap: anywhere; min-width: 0; }
+.app { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; background: var(--bg); min-width: 0; }
+.score { font-family: var(--mono); font-size: 13px; width: 44px; text-align: center; border-radius: 6px; padding: 4px 0; background: var(--sunk); color: var(--muted); }
+.score.apply { background: var(--good-soft); color: var(--good); } .score.care { background: var(--warm-soft); color: var(--warm); } .score.skip { background: var(--danger-soft); color: var(--danger); }
+.who { min-width: 0; } .who b { display: block; overflow-wrap: anywhere; } .who span { font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
+.due { color: var(--warm); font-weight: 600; }
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-weight: 600; font-size: 14px; max-width: calc(100% - 32px); z-index: 5; }
+.confirm { background: var(--warm-soft); border-radius: 8px; padding: 10px; display: grid; gap: 8px; }
+.progress { display: flex; gap: 10px; align-items: center; color: var(--muted); font-size: 14px; }
+.dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); }
+@media (prefers-reduced-motion: no-preference) { .dot { animation: pulse 1s ease-in-out infinite alternate; } @keyframes pulse { from { opacity: .3 } to { opacity: 1 } } }
+@media (max-width: 560px) { h1 { font-size: 25px; } .qa { grid-template-columns: 1fr auto; } .qa b { grid-column: 1 / -1; } .app { grid-template-columns: auto 1fr; } .app .row { grid-column: 1 / -1; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="stack" style="gap:4px">
+      <span class="eyebrow">Application copilot</span>
+      <h1>Apply Desk</h1>
+      <p class="muted small">Paste a job ad. Get a fit verdict and a ready-to-paste application kit. You review it and click Submit.</p>
+    </div>
+    <div class="stats" id="stats"></div>
+  </header>
+  <div id="notice"></div>
+  <nav class="tabs" role="tablist" id="tabs"></nav>
+  <main id="main"></main>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(() => {
+  "use strict";
+  const STATUSES = [["prepared", "Prepared"], ["applied", "Applied"], ["interview", "Interview"], ["offer", "Offer"], ["rejected", "Rejected"], ["skipped", "Skipped"]];
+  const ANSWER_LABELS = [["whyCompany", "Why this company?"], ["whyRole", "Why this role?"], ["achievement", "Biggest achievement"], ["salary", "Salary expectation"], ["notice", "Notice period / start date"], ["workPermit", "Work permit"], ["languages", "Languages"], ["location", "Location / remote"]];
+  const WARM_PATHS = "https://claude.ai/artifact/BeZ2R6HaooKp7NFHDtkj68";
+  const EXAMPLE_JD = `Senior Product Manager – Internal Platforms & AI (f/m/d), Berlin (hybrid)
+
+About the role: You'll own our internal tools platform used by 2,000 operations agents across Europe. You will define the roadmap for CRM workflows, automation and AI assistants, working closely with engineering, data and operations leaders.
+
+What you'll do:
+- Own the product strategy and roadmap for our Salesforce-based operations platform
+- Identify where AI agents and automation can remove manual work, and measure the impact
+- Translate operational pain points into clear requirements and drive delivery with engineering
+- Drive adoption across markets with training and change management
+
+What you bring:
+- 6+ years of product management, ideally on internal or B2B platforms
+- Hands-on experience with Salesforce or similar CRM platforms
+- Track record of shipping AI or automation features with measurable outcomes
+- Fluent English; German is a plus`;
+
+  const S = { tab: "new", apps: [], settings: null, db: null, sample: null, user: null, canWrite: true, dbState: "loading",
+    openId: null, form: { company: "", role: "", url: "", jd: "" }, run: null, pending: false, confirmDel: null, example: false };
+
+  const $ = (s, r = document) => r.querySelector(s);
+  const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
+  const todayISO = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
+  const addDays = (iso, n) => { const d = new Date(iso + "T12:00:00"); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); };
+  const fmtDate = (iso) => { if (!iso) return ""; const d = new Date(iso.length === 10 ? iso + "T12:00:00" : iso); return isNaN(d) ? iso : d.toLocaleDateString(undefined, { day: "numeric", month: "short" }); };
+  function toast(msg) { const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast._t); toast._t = setTimeout(() => (t.hidden = true), 2600); }
+  const vClass = (v) => (/skip/i.test(v || "") ? "skip" : /care/i.test(v || "") ? "care" : "apply");
+  const weekStart = () => { const d = new Date(); const day = (d.getDay() + 6) % 7; d.setDate(d.getDate() - day); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
+
+  /* ---------- persistence ---------- */
+  const queues = {};
+  function writeDoc(path, data) {
+    if (!S.db || S.example) return Promise.resolve();
+    const run = () => S.db.doc(path).set(data).catch((e) => {
+      toast(e?.code === "quota_exceeded" ? "Storage is full. Delete old applications." : "Couldn't save. Try again.");
+      if (e?.code === "invalid_argument") { S.canWrite = false; render(); }
+    });
+    queues[path] = (queues[path] || Promise.resolve()).then(run, run);
+    return queues[path];
+  }
+  function saveApp(app) { app.updatedAt = new Date().toISOString(); const i = S.apps.findIndex((a) => a.id === app.id); if (i >= 0) S.apps[i] = app; else S.apps.unshift(app); writeDoc("apps/" + app.id, app); }
+
+  /* ---------- Claude ---------- */
+  function buildPrompt(job) {
+    const st = S.settings || {};
+    return `You are helping Sameh Basaly apply for a job. Use ONLY facts from the profile below. Never invent employers, numbers, tools, certifications or experience. If the job asks for something Sameh does not have, list it under gaps instead of claiming it.
+
+PROFILE:
+${String(st.profile || "").slice(0, 12000)}
+
+STANDARD ANSWERS (use these facts for salary, notice period, work permit, languages and location):
+${String(st.answers || "").slice(0, 3000)}
+
+JOB: ${job.role || "Role not given"} at ${job.company || "Company not given"}${job.url ? " (" + job.url + ")" : ""}
+JOB AD:
+${String(job.jd).slice(0, 20000)}
+
+Reply with only one JSON object in exactly this shape:
+{"fit": <integer 0-100>, "verdict": "Apply" | "Apply with care" | "Skip", "verdictReason": "<one sentence>",
+"germanRequired": "none" | "nice to have" | "required",
+"matches": ["<3 to 5 short points, each linking a requirement in the ad to concrete proof from the profile>"],
+"gaps": [{"gap": "<missing requirement>", "bridge": "<honest one-line answer Sameh can give>"}],
+"keywords": ["<6 to 10 exact terms from the ad to mirror in the CV>"],
+"cvSummary": "<4 to 5 line CV summary tailored to this role, no first-person pronouns>",
+"leadBullets": ["<4 to 5 achievements that already exist in the profile, reworded for this role, to list first>"],
+"coverLetter": "<180 to 250 words, plain text, paragraphs separated by a blank line, open with 'Dear Hiring Team,' unless the ad names a person, close with 'Best regards,\\nSameh Basaly'. Concrete, no cliches.>",
+"answers": {"whyCompany": "<2-3 sentences using what the ad says about the company>", "whyRole": "<2-3 sentences>", "achievement": "<3-4 sentences, one achievement with its numbers>", "salary": "<from standard answers>", "notice": "<from standard answers>", "workPermit": "<from standard answers>", "languages": "<from standard answers>", "location": "<from standard answers>"},
+"recruiterNote": "<LinkedIn connection note to the recruiter, at most 280 characters>"}
+Scoring guide: 80+ strong match, 60-79 worth applying with a tailored story, under 60 skip unless Sameh has a referral. Set verdict to "Skip" when fluent or C1 German is required.`;
+  }
+  const SAMPLE_ERR = {
+    not_granted: "Claude isn't allowed on this page. Reload and allow it when asked.", sampling_disabled: "Claude isn't available for this account.",
+    rate_limited: "Too many requests right now. Wait a minute, then try again.", session_expired: "Sign in to claude.ai again, then retry.",
+    refused: "Claude declined this ad. Check you pasted a job description.", prompt_too_large: "The ad is too long. Paste only the job description part.",
+    invalid_json: "The answer came back in the wrong shape. Click Prepare again.", empty_completion: "Nothing came back. Click Prepare again."
+  };
+  async function prepare(job, existingId) {
+    if (!S.sample) { toast("Claude isn't available in this view."); return; }
+    const ctl = new AbortController();
+    S.run = { ctl, chars: 0, error: "" }; render();
+    try {
+      const res = await S.sample.json(buildPrompt(job), { signal: ctl.signal, onText: ({ text }) => { if (S.run) { S.run.chars = text.length; const el = $("#run-chars"); if (el) el.textContent = text.length.toLocaleString(); } } });
+      if (!res || typeof res !== "object" || typeof res.fit !== "number") throw { code: "invalid_json" };
+      const prev = S.apps.find((a) => a.id === existingId);
+      const app = { ...(prev || {}), id: existingId || "a" + Date.now().toString(36), company: job.company.slice(0, 120), role: job.role.slice(0, 160), url: job.url.slice(0, 500),
+        jd: job.jd.slice(0, 20000), kit: res, status: prev?.status || "prepared", createdAt: prev?.createdAt || new Date().toISOString() };
+      saveApp(app); S.run = null; S.openId = app.id; S.tab = "kit"; S.form = { company: "", role: "", url: "", jd: "" };
+      render(); window.scrollTo({ top: 0 });
+    } catch (e) {
+      if (e?.code === "cancelled") { S.run = null; render(); return; }
+      S.run = { error: SAMPLE_ERR[e?.code] || "Preparation was interrupted. Click Prepare again." }; render();
+    }
+  }
+
+  /* ---------- views ---------- */
+  function renderStats() {
+    const real = S.apps;
+    const wk = weekStart();
+    const appliedWeek = real.filter((a) => a.appliedOn && a.appliedOn >= wk).length;
+    const goal = Number(S.settings?.weeklyGoal) || 10;
+    const interviews = real.filter((a) => a.status === "interview" || a.status === "offer").length;
+    const due = real.filter((a) => a.status === "applied" && a.followUp && a.followUp <= todayISO()).length;
+    $("#stats").innerHTML = `
+      <div class="stat"><b>${appliedWeek}<span class="muted" style="font-size:13px"> / ${goal}</span></b><span>applied this week</span><div class="meter"><i style="width:${Math.min(100, (appliedWeek / goal) * 100)}%"></i></div></div>
+      <div class="stat"><b>${real.filter((a) => a.status === "prepared").length}</b><span>ready to send</span></div>
+      <div class="stat"><b>${interviews}</b><span>interviews</span></div>
+      <div class="stat"><b style="${due ? "color:var(--warm)" : ""}">${due}</b><span>follow-ups due</span></div>`;
+  }
+  function renderNotice() {
+    let h = "";
+    if (S.dbState === "unavailable") h = `<div class="banner">Saving isn't available in this view. Open Apply Desk from your claude.ai artifacts while signed in.</div>`;
+    else if (!S.canWrite) h = `<div class="banner">This page is read-only for you.</div>`;
+    else if (S.example) h = `<div class="banner info"><b>Example mode.</b> This ad is a made-up sample so you can see a full kit. Nothing is saved. <button class="sm" data-act="example-off">Leave example mode</button></div>`;
+    $("#notice").innerHTML = h;
+  }
+  function renderTabs() {
+    const open = S.apps.find((a) => a.id === S.openId);
+    const tabs = [["new", "New application"], ...(open ? [["kit", open.company || "Kit"]] : []), ["pipeline", "Pipeline", S.apps.length], ["settings", "My answers"]];
+    $("#tabs").innerHTML = tabs.map(([k, v, n]) => `<button role="tab" data-act="tab" data-tab="${k}" aria-selected="${S.tab === k}">${esc(v)}${n != null ? `<span class="count">${n}</span>` : ""}</button>`).join("");
+  }
+  function renderNew() {
+    const f = S.form, r = S.run;
+    const missing = !S.settings?.profile;
+    return `<section class="panel">
+      <h2>Paste a job ad</h2>
+      ${missing ? `<div class="banner">Add your profile in <b>My answers</b> first. Claude only uses facts from it.</div>` : ""}
+      <form class="stack" data-form="job">
+        <div class="grid2">
+          <label class="field">Company<input data-live="1" type="text" id="job-company" name="company" required value="${esc(f.company)}" placeholder="e.g. N26"></label>
+          <label class="field">Role<input data-live="1" type="text" id="job-role" name="role" required value="${esc(f.role)}" placeholder="e.g. Senior Product Manager, AI"></label>
+        </div>
+        <label class="field">Job link (optional)<input data-live="1" type="url" id="job-url" name="url" value="${esc(f.url)}" placeholder="https://"></label>
+        <label class="field">Job description<textarea data-live="1" id="job-jd" name="jd" rows="12" required placeholder="Open the job posting, select all the text of the ad, copy it and paste it here.">${esc(f.jd)}</textarea></label>
+        ${r && !r.error ? `<div class="progress"><span class="dot"></span><span>Reading the ad and writing your kit… <span class="mono" id="run-chars">${(r.chars || 0).toLocaleString()}</span> characters so far. Usually 30–90 seconds.</span><button type="button" class="sm" data-act="stop">Stop</button></div>` : ""}
+        ${r?.error ? `<p class="small" style="color:var(--danger)">${esc(r.error)}</p>` : ""}
+        <div class="row">
+          <button class="primary" type="submit" ${r && !r.error ? "disabled" : ""} ${S.sample ? "" : "disabled"}>Prepare application</button>
+          ${!S.apps.length && !S.example ? `<button type="button" data-act="example">See an example first</button>` : ""}
+          ${S.sample ? "" : `<span class="small muted">Claude isn't available in this view.</span>`}
+        </div>
+      </form>
+    </section>
+    <section class="panel">
+      <h3>Where to find good ads</h3>
+      <ul class="clean small muted">
+        <li>Your daily job scan notification (weekdays, 07:45): open a link, copy the ad, paste it here.</li>
+        <li>LinkedIn and StepStone alerts for "Senior Product Manager", "AI Product Manager", "Product Owner Salesforce".</li>
+        <li>Company career pages: the ad text there is often more complete than on job boards.</li>
+      </ul>
+    </section>`;
+  }
+  function block(title, text, key) {
+    return `<div class="block"><div class="block-head"><h3>${esc(title)}</h3><button class="sm" data-act="copy" data-key="${esc(key)}">Copy</button></div><pre>${esc(text)}</pre></div>`;
+  }
+  function textFor(app, key) {
+    const k = app.kit || {};
+    if (key === "cover") return k.coverLetter || "";
+    if (key === "summary") return k.cvSummary || "";
+    if (key === "bullets") return (k.leadBullets || []).map((b) => "• " + b).join("\n");
+    if (key === "note") return k.recruiterNote || "";
+    if (key === "keywords") return (k.keywords || []).join(", ");
+    if (key.startsWith("ans:")) return (k.answers || {})[key.slice(4)] || "";
+    return "";
+  }
+  function renderKit() {
+    const app = S.apps.find((a) => a.id === S.openId);
+    if (!app) return `<section class="panel"><p class="muted">Pick an application from the Pipeline.</p></section>`;
+    const k = app.kit || {}, vc = vClass(k.verdict);
+    const de = k.germanRequired === "required" ? ["p-de-req", "German required"] : k.germanRequired === "nice to have" ? ["p-de-nice", "German is a plus"] : ["p-de-none", "English is enough"];
+    const st = STATUSES.find((s) => s[0] === app.status) || STATUSES[0];
+    return `<section class="panel">
+      <div class="verdict">
+        <div class="dial v-${vc}" style="--v:${Math.max(0, Math.min(100, k.fit | 0))}"><span>${k.fit | 0}</span></div>
+        <div class="stack" style="gap:4px;min-width:0">
+          <span class="eyebrow">${esc(app.company)}</span>
+          <h2>${esc(app.role)}</h2>
+          <div class="row"><span class="pill p-${vc}">${esc(k.verdict || "Apply")}</span><span class="pill ${de[0]}">${de[1]}</span><span class="small muted">${esc(k.verdictReason || "")}</span></div>
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="stack"><h3>Why you fit</h3><ul class="clean small">${(k.matches || []).map((m) => `<li>${esc(m)}</li>`).join("")}</ul></div>
+        <div class="stack"><h3>Gaps and how to answer them</h3>${(k.gaps || []).length ? `<ul class="clean small">${k.gaps.map((g) => `<li><b>${esc(g.gap)}</b> — ${esc(g.bridge)}</li>`).join("")}</ul>` : `<p class="small muted">No real gaps found.</p>`}</div>
+      </div>
+      <div class="row spread">
+        <div class="row">
+          ${app.url ? `<a class="btn primary" href="${esc(app.url)}" target="_blank" rel="noopener">Open the job ad ↗</a>` : ""}
+          ${app.status === "prepared" && !S.example ? `<button data-act="applied" data-id="${esc(app.id)}">I submitted it</button>` : `<span class="pill p-apply">${esc(st[1])}${app.appliedOn ? " · " + fmtDate(app.appliedOn) : ""}</span>`}
+          <a class="btn ghost" href="${WARM_PATHS}" target="_blank" rel="noopener">Who do I know at ${esc(app.company)}? ↗</a>
+        </div>
+        ${!S.example ? `<button class="ghost sm" data-act="redo" data-id="${esc(app.id)}">Prepare again</button>` : ""}
+      </div>
+    </section>
+    <section class="panel kit">
+      <h2>Your application kit</h2>
+      <div class="block"><div class="block-head"><h3>Keywords to mirror in your CV</h3><button class="sm" data-act="copy" data-key="keywords">Copy</button></div><div class="chips">${(k.keywords || []).map((w) => `<span class="chip">${esc(w)}</span>`).join("")}</div></div>
+      ${block("CV summary for this role", textFor(app, "summary"), "summary")}
+      ${block("Put these achievements first", textFor(app, "bullets"), "bullets")}
+      ${block("Cover letter", textFor(app, "cover"), "cover")}
+      <div class="block"><h3>Application form answers</h3>
+        <div class="stack">${ANSWER_LABELS.map(([key, label]) => (k.answers || {})[key] ? `<div class="qa"><b>${esc(label)}</b><p class="small">${esc(k.answers[key])}</p><button class="sm" data-act="copy" data-key="ans:${key}">Copy</button></div>` : "").join("")}</div>
+      </div>
+      ${block("Note to the recruiter on LinkedIn", textFor(app, "note"), "note")}
+      <p class="small muted">Read everything before you paste it. Claude only used your profile, but check every number and claim is right for this role. Want this kit as a tailored PDF CV in your design? Ask Claude in your chat with the company name.</p>
+    </section>`;
+  }
+  function renderPipeline() {
+    if (!S.apps.length) return `<section class="panel"><h2>No applications yet</h2><p class="muted">Prepare your first one in New application. Each prepared kit lands here so you can track it to an offer.</p></section>`;
+    const order = { interview: 0, offer: 1, prepared: 2, applied: 3, rejected: 4, skipped: 5 };
+    const list = [...S.apps].sort((a, b) => (order[a.status] ?? 9) - (order[b.status] ?? 9) || (b.updatedAt || "").localeCompare(a.updatedAt || ""));
+    return `<section class="panel"><h2>Pipeline</h2><div class="stack">${list.map((a) => {
+      const k = a.kit || {}, due = a.status === "applied" && a.followUp && a.followUp <= todayISO();
+      return `<div class="app">
+        <span class="score ${k.fit != null ? vClass(k.verdict) : ""}">${k.fit != null ? k.fit : "—"}</span>
+        <div class="who"><b>${esc(a.role || "Role")}</b><span>${esc(a.company)}${a.appliedOn ? " · applied " + fmtDate(a.appliedOn) : ""}${a.followUp && a.status === "applied" ? ` · <span class="${due ? "due" : ""}">follow up ${fmtDate(a.followUp)}</span>` : ""}</span></div>
+        <div class="row">
+          <select data-act="status" data-id="${esc(a.id)}" aria-label="Status" ${S.canWrite ? "" : "disabled"}>${STATUSES.map(([v, l]) => `<option value="${v}" ${v === a.status ? "selected" : ""}>${l}</option>`).join("")}</select>
+          ${a.kit ? `<button class="sm" data-act="open" data-id="${esc(a.id)}">Open kit</button>` : (a.jd ? `<button class="sm" data-act="redo" data-id="${esc(a.id)}">Prepare kit</button>` : "")}
+          ${S.confirmDel === a.id ? `<button class="sm danger" data-act="del" data-id="${esc(a.id)}">Confirm delete</button><button class="sm" data-act="del-cancel">Keep</button>` : `<button class="sm ghost danger" data-act="ask-del" data-id="${esc(a.id)}" aria-label="Delete">Delete</button>`}
+        </div>
+      </div>`;
+    }).join("")}</div></section>`;
+  }
+  function renderSettings() {
+    const st = S.settings || {};
+    return `<section class="panel">
+      <h2>My answers</h2>
+      <p class="small muted">Claude builds every kit from these two boxes only. Keep them accurate: anything missing here won't appear in your applications.</p>
+      <form class="stack" data-form="settings">
+        <label class="field">Profile (your career facts and numbers)<textarea data-live="1" id="set-profile" name="profile" rows="14">${esc(st.profile || "")}</textarea></label>
+        <label class="field">Standard answers (salary, notice period, work permit, languages, location)<textarea data-live="1" id="set-answers" name="answers" rows="7">${esc(st.answers || "")}</textarea></label>
+        <label class="field" style="max-width:220px">Weekly application goal<input data-live="1" type="number" min="1" max="50" id="set-goal" name="weeklyGoal" value="${esc(st.weeklyGoal || 10)}"></label>
+        <div class="row"><button class="primary" type="submit" ${S.canWrite ? "" : "disabled"}>Save</button></div>
+      </form>
+    </section>`;
+  }
+  function render() {
+    const a = document.activeElement;
+    if (a && a.dataset && a.dataset.live && $("#main").contains(a)) { S.pending = true; renderStats(); return; }
+    S.pending = false;
+    renderStats(); renderNotice(); renderTabs();
+    $("#main").innerHTML = `<div class="stack" style="gap:14px">${S.tab === "new" ? renderNew() : S.tab === "kit" ? renderKit() : S.tab === "pipeline" ? renderPipeline() : renderSettings()}</div>`;
+  }
+
+  /* ---------- events ---------- */
+  document.addEventListener("focusout", () => setTimeout(() => { if (S.pending) render(); }, 0));
+  document.addEventListener("input", (ev) => {
+    const el = ev.target; if (!el.closest('form[data-form="job"]')) return;
+    if (el.name in S.form) S.form[el.name] = el.value;
+  });
+  document.addEventListener("click", async (ev) => {
+    const el = ev.target.closest("[data-act]"); if (!el || el.tagName === "SELECT") return;
+    const act = el.dataset.act, app = S.apps.find((x) => x.id === el.dataset.id);
+    if (act === "tab") { S.tab = el.dataset.tab; render(); }
+    else if (act === "stop") S.run?.ctl?.abort();
+    else if (act === "copy") {
+      const cur = S.apps.find((x) => x.id === S.openId); const text = cur ? textFor(cur, el.dataset.key) : "";
+      try { await navigator.clipboard.writeText(text); toast("Copied"); } catch { toast("Copy didn't work here. Select the text and press Ctrl/Cmd + C."); }
+    }
+    else if (act === "applied" && app) { const t = todayISO(); saveApp({ ...app, status: "applied", appliedOn: t, followUp: addDays(t, 7) }); toast("Logged. Follow-up reminder set for 7 days."); render(); }
+    else if (act === "open" && app) { S.openId = app.id; S.tab = "kit"; render(); }
+    else if (act === "redo" && app) { S.tab = "new"; S.form = { company: app.company, role: app.role, url: app.url || "", jd: app.jd || "" }; render(); prepare({ ...S.form }, app.id); }
+    else if (act === "ask-del") { S.confirmDel = el.dataset.id; render(); }
+    else if (act === "del-cancel") { S.confirmDel = null; render(); }
+    else if (act === "del" && app) { S.apps = S.apps.filter((x) => x.id !== app.id); if (S.openId === app.id) { S.openId = null; } S.confirmDel = null; render(); S.db?.doc("apps/" + app.id).delete().catch(() => toast("Couldn't delete. Try again.")); }
+    else if (act === "example") { S.example = true; S.form = { company: "Example GmbH (sample)", role: "Senior Product Manager – Internal Platforms & AI", url: "", jd: EXAMPLE_JD }; S.tab = "new"; render(); }
+    else if (act === "example-off") { S.example = false; S.apps = S.apps.filter((x) => !x.example); S.openId = null; S.tab = "new"; S.form = { company: "", role: "", url: "", jd: "" }; render(); }
+  });
+  document.addEventListener("change", (ev) => {
+    const el = ev.target;
+    if (el.dataset?.act === "status") {
+      const app = S.apps.find((x) => x.id === el.dataset.id); if (!app) return;
+      const next = { ...app, status: el.value };
+      if (el.value === "applied" && !app.appliedOn) { next.appliedOn = todayISO(); next.followUp = addDays(todayISO(), 7); }
+      saveApp(next); render();
+    }
+  });
+  document.addEventListener("submit", (ev) => {
+    const f = ev.target.closest("form[data-form]"); if (!f) return; ev.preventDefault();
+    const d = Object.fromEntries(new FormData(f).entries());
+    if (f.dataset.form === "job") {
+      const job = { company: String(d.company || "").trim(), role: String(d.role || "").trim(), url: String(d.url || "").trim(), jd: String(d.jd || "").trim() };
+      if (job.jd.length < 200) { S.run = { error: "That looks too short for a job ad. Paste the full description." }; render(); return; }
+      S.form = job;
+      // In example mode writeDoc skips saving, so the sample kit stays in memory only.
+      const wasExample = S.example;
+      prepare(job).then(() => { if (wasExample) { const a = S.apps.find((x) => x.id === S.openId); if (a) a.example = true; } });
+    } else if (f.dataset.form === "settings") {
+      S.settings = { profile: String(d.profile || "").slice(0, 12000), answers: String(d.answers || "").slice(0, 3000), weeklyGoal: Math.max(1, Math.min(50, Number(d.weeklyGoal) || 10)) };
+      if (S.db) S.db.doc("settings/profile").set(S.settings).then(() => toast("Saved"), () => toast("Couldn't save. Try again.")); else toast("Saving isn't available here");
+      render();
+    }
+  });
+
+  /* ---------- boot ---------- */
+  render();
+  (async () => {
+    const [db, user, sample] = await Promise.all(["db", "user", "sample"].map((n) => (window.claude?.use ? window.claude.use(n).catch(() => null) : Promise.resolve(null))));
+    S.sample = sample; S.user = user;
+    if (!db) { S.dbState = "unavailable"; S.canWrite = false; render(); return; }
+    S.db = db; S.dbState = "ready";
+    try { const can = user?.can ? await user.can("data.write") : null; if (can === false) S.canWrite = false; } catch {}
+    db.collection("apps").onSnapshot((snap) => {
+      const local = S.apps.filter((a) => a.example);
+      S.apps = [...local, ...snap.docs.map((d) => ({ id: d.id, ...d.data() }))];
+      if (!S.apps.length && S.tab === "pipeline") S.tab = "new";
+      render();
+    }, () => {});
+    db.doc("settings/profile").onSnapshot((d) => { S.settings = d.exists ? { ...d.data() } : {}; render(); }, () => {});
+  })();
+})();
+</script>
